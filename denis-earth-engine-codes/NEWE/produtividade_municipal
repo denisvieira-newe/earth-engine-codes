@@ -1,0 +1,130 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var table = ee.FeatureCollection("users/deniscortevieira/BR_Municipios_PAM_soja_estatistica_biomassa");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var brasil = ee.FeatureCollection('users/deniscortevieira/LimitePolitico/Brasil_IBGE');
+
+var pamImage = table
+  .filter(ee.Filter.notNull(['2010']))
+  .reduceToImage({
+    properties: ['2010'],
+    reducer: ee.Reducer.first()
+}).rename('PAM_2010').addBands(table
+  .filter(ee.Filter.notNull(['2011']))
+  .reduceToImage({
+    properties: ['2011'],
+    reducer: ee.Reducer.first()
+}).rename('PAM_2011')).addBands(table
+  .filter(ee.Filter.notNull(['2012']))
+  .reduceToImage({
+    properties: ['2012'],
+    reducer: ee.Reducer.first()
+}).rename('PAM_2012')).addBands(table
+  .filter(ee.Filter.notNull(['2013']))
+  .reduceToImage({
+    properties: ['2013'],
+    reducer: ee.Reducer.first()
+}).rename('PAM_2013')).addBands(table
+  .filter(ee.Filter.notNull(['2014']))
+  .reduceToImage({
+    properties: ['2014'],
+    reducer: ee.Reducer.first()
+}).rename('PAM_2014')).addBands(table
+  .filter(ee.Filter.notNull(['2015']))
+  .reduceToImage({
+    properties: ['2015'],
+    reducer: ee.Reducer.first()
+}).rename('PAM_2015')).addBands(table
+  .filter(ee.Filter.notNull(['2016']))
+  .reduceToImage({
+    properties: ['2016'],
+    reducer: ee.Reducer.first()
+}).rename('PAM_2016')).addBands(table
+  .filter(ee.Filter.notNull(['2017']))
+  .reduceToImage({
+    properties: ['2017'],
+    reducer: ee.Reducer.first()
+}).rename('PAM_2017')).addBands(table
+  .filter(ee.Filter.notNull(['2018']))
+  .reduceToImage({
+    properties: ['2018'],
+    reducer: ee.Reducer.first()
+}).rename('PAM_2018')).addBands(table
+  .filter(ee.Filter.notNull(['2019']))
+  .reduceToImage({
+    properties: ['2019'],
+    reducer: ee.Reducer.first()
+}).rename('PAM_2019'));
+print(pamImage);
+
+Map.addLayer(pamImage);
+
+var meanBiomass = table
+  .filter(ee.Filter.notNull(['mean_2010']))
+  .reduceToImage({
+    properties: ['mean_2010'],
+    reducer: ee.Reducer.first()
+}).rename('mean_biomass_2010').addBands(table
+  .filter(ee.Filter.notNull(['mean_2011']))
+  .reduceToImage({
+    properties: ['mean_2011'],
+    reducer: ee.Reducer.first()
+}).rename('mean_biomass_2011')).addBands(table
+  .filter(ee.Filter.notNull(['mean_2012']))
+  .reduceToImage({
+    properties: ['mean_2012'],
+    reducer: ee.Reducer.first()
+}).rename('mean_biomass_2012')).addBands(table
+  .filter(ee.Filter.notNull(['mean_2013']))
+  .reduceToImage({
+    properties: ['mean_2013'],
+    reducer: ee.Reducer.first()
+}).rename('mean_biomass_2013')).addBands(table
+  .filter(ee.Filter.notNull(['mean_2014']))
+  .reduceToImage({
+    properties: ['mean_2014'],
+    reducer: ee.Reducer.first()
+}).rename('mean_biomass_2014')).addBands(table
+  .filter(ee.Filter.notNull(['mean_2015']))
+  .reduceToImage({
+    properties: ['mean_2015'],
+    reducer: ee.Reducer.first()
+}).rename('mean_biomass_2015')).addBands(table
+  .filter(ee.Filter.notNull(['mean_2016']))
+  .reduceToImage({
+    properties: ['mean_2016'],
+    reducer: ee.Reducer.first()
+}).rename('mean_biomass_2016')).addBands(table
+  .filter(ee.Filter.notNull(['mean_2017']))
+  .reduceToImage({
+    properties: ['mean_2017'],
+    reducer: ee.Reducer.first()
+}).rename('mean_biomass_2017')).addBands(table
+  .filter(ee.Filter.notNull(['mean_2018']))
+  .reduceToImage({
+    properties: ['mean_2018'],
+    reducer: ee.Reducer.first()
+}).rename('mean_biomass_2018')).addBands(table
+  .filter(ee.Filter.notNull(['mean_2019']))
+  .reduceToImage({
+    properties: ['mean_2019'],
+    reducer: ee.Reducer.first()
+}).rename('mean_biomass_2019'));
+print(meanBiomass);
+Map.addLayer(meanBiomass);
+
+var pixelBiomass = ee.Image('users/INPE/ndvi_safra_2010_2020');
+print(pixelBiomass);
+Map.addLayer(pixelBiomass);
+
+var estimate_yield = (pamImage.multiply(pixelBiomass)).divide(meanBiomass).toUint8();
+print(estimate_yield);
+Map.addLayer(estimate_yield, {}, 'estimate_yield');
+
+Export.image.toAsset({
+   image: estimate_yield,
+   description : 'soja_produtividade_sc_ha', 
+   assetId: 'soja_produtividade',
+   scale: 30, // define a resolução espacial de saída
+   region: brasil.geometry(),
+   maxPixels: 1e13
+ });

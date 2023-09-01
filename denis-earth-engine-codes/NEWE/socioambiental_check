@@ -1,0 +1,109 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = /* color: #d63000 */ee.FeatureCollection(
+        [ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-51.41705449163789, -25.72915189545136],
+                  [-51.42083104193086, -25.73502815481678],
+                  [-51.41516621649141, -25.734873520133785]]]),
+            {
+              "system:index": "0"
+            }),
+        ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-51.43507893621797, -25.732244699745536],
+                  [-51.439713793395704, -25.7354920576587],
+                  [-51.436452227233595, -25.7375022823851]]]),
+            {
+              "system:index": "1"
+            }),
+        ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-51.43233235418672, -25.723739294349322],
+                  [-51.43216069280977, -25.728533324937874],
+                  [-51.42683919012422, -25.72698688457516]]]),
+            {
+              "system:index": "2"
+            }),
+        ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-51.40555317938203, -25.720182308058106],
+                  [-51.40778477728242, -25.723739294349322],
+                  [-51.40280659735078, -25.72466718632101]]]),
+            {
+              "system:index": "3"
+            })]);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+//Bases geometricas de checagem socioambiental
+var quilombo = ee.FeatureCollection('projects/base-vetorial-socioambiental/assets/Areas_Quilombolas');
+var indigena = ee.FeatureCollection('projects/base-vetorial-socioambiental/assets/Areas_indigenas');
+var arqueologia = ee.FeatureCollection('projects/base-vetorial-socioambiental/assets/Sitios_Arqueologicos');
+var ucs_restritiva = ee.FeatureCollection('projects/base-vetorial-socioambiental/assets/UCS_NAO_RESTRITIVAS');
+var ucs_nao_restritiva = ee.FeatureCollection('projects/base-vetorial-socioambiental/assets/UCS_RESTRITIVAS');
+var icmbio = ee.FeatureCollection('projects/base-vetorial-socioambiental/assets/embargos_ICMBio');
+var ibama = ee.FeatureCollection('projects/base-vetorial-socioambiental/assets/embargos_ibama');
+
+//Função para checagem socioambiental por polígono
+
+function socioambiental_check_by_polygon(feature){
+  feature = ee.Feature(ee.Algorithms.If(feature.geometry().intersects(quilombo.geometry()),
+                                        feature.set('Area_quilombola', ee.String('Alerta!')),
+                                        feature.set('Area_quilombola', ee.String('Não consta.'))));
+  
+  feature = ee.Feature(ee.Algorithms.If(feature.geometry().intersects(indigena.geometry()),
+                                     feature.set('Areas_indigenas', ee.String('Alerta!')),
+                                     feature.set('Areas_indigenas', ee.String('Não consta.'))));
+  
+  feature = ee.Feature(ee.Algorithms.If(feature.geometry().intersects(arqueologia.geometry()),
+                                     feature.set('Sitios_arqueologicos', ee.String('Alerta!')),
+                                     feature.set('Sitios_arqueologicos', ee.String('Não consta.'))));
+  
+  feature = ee.Feature(ee.Algorithms.If(feature.geometry().intersects(ucs_restritiva.geometry()),
+                                     feature.set('UCS_restritiva', ee.String('Alerta!')),
+                                     feature.set('UCS_restritiva', ee.String('Não consta.'))));
+  
+  feature = ee.Feature(ee.Algorithms.If(feature.geometry().intersects(ucs_nao_restritiva.geometry()),
+                                     feature.set('UCS_nao_restritiva', ee.String('Alerta!')),
+                                     feature.set('UCS_nao_restritiva', ee.String('Não consta.'))));
+  
+  feature = ee.Feature(ee.Algorithms.If(feature.geometry().intersects(icmbio.geometry()),
+                                     feature.set('Embargo_ICMBio', ee.String('Alerta!')),
+                                     feature.set('Embargo_ICMBio', ee.String('Não consta.'))));
+  
+  return ee.Feature(ee.Algorithms.If(feature.geometry().intersects(ibama.geometry()),
+                                     feature.set('Embargo_IBAMA', ee.String('Alerta!')),
+                                     feature.set('Embargo_IBAMA', ee.String('Não consta.'))));
+}
+
+function socioambiental_check_by_polygon(feature){
+  feature = ee.Feature(ee.Algorithms.If(ee.FeatureCollection(quilombo.filterBounds(feature)).size(),
+                                        feature.set('Area_quilombola', ee.String('Alerta!')),
+                                        feature.set('Area_quilombola', ee.String('Não consta.'))));
+  
+  feature = ee.Feature(ee.Algorithms.If(feature.geometry().intersects(indigena.geometry()),
+                                     feature.set('Areas_indigenas', ee.String('Alerta!')),
+                                     feature.set('Areas_indigenas', ee.String('Não consta.'))));
+  
+  feature = ee.Feature(ee.Algorithms.If(feature.geometry().intersects(arqueologia.geometry()),
+                                     feature.set('Sitios_arqueologicos', ee.String('Alerta!')),
+                                     feature.set('Sitios_arqueologicos', ee.String('Não consta.'))));
+  
+  feature = ee.Feature(ee.Algorithms.If(feature.geometry().intersects(ucs_restritiva.geometry()),
+                                     feature.set('UCS_restritiva', ee.String('Alerta!')),
+                                     feature.set('UCS_restritiva', ee.String('Não consta.'))));
+  
+  feature = ee.Feature(ee.Algorithms.If(feature.geometry().intersects(ucs_nao_restritiva.geometry()),
+                                     feature.set('UCS_nao_restritiva', ee.String('Alerta!')),
+                                     feature.set('UCS_nao_restritiva', ee.String('Não consta.'))));
+  
+  feature = ee.Feature(ee.Algorithms.If(feature.geometry().intersects(icmbio.geometry()),
+                                     feature.set('Embargo_ICMBio', ee.String('Alerta!')),
+                                     feature.set('Embargo_ICMBio', ee.String('Não consta.'))));
+  
+  return ee.Feature(ee.Algorithms.If(feature.geometry().intersects(ibama.geometry()),
+                                     feature.set('Embargo_IBAMA', ee.String('Alerta!')),
+                                     feature.set('Embargo_IBAMA', ee.String('Não consta.'))));
+}
+
+Map.addLayer(ibama)
+
+print(geometry.map(socioambiental_check_by_polygon));

@@ -1,0 +1,67 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var table = ee.FeatureCollection("users/deniscortevieira/LimitePolitico/Brasil_IBGE");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var bounds = ee.FeatureCollection('users/deniscortevieira/LimitePolitico/Brasil_IBGE')
+
+var mapBiomasCrop = ee.Image('projects/mapbiomas-workspace/public/collection4_1/mapbiomas_collection41_integration_v1')
+                  .select('classification_2018').eq(19).add(ee.Image('projects/mapbiomas-workspace/public/collection4_1/mapbiomas_collection41_integration_v1')
+                  .select('classification_2018').eq(18)).add(ee.Image('projects/mapbiomas-workspace/public/collection4_1/mapbiomas_collection41_integration_v1')
+                  .select('classification_2018').eq(14)).add(ee.Image('projects/mapbiomas-workspace/public/collection4_1/mapbiomas_collection41_integration_v1')
+                  .select('classification_2018').eq(21));
+                  
+var cropArea = mapBiomasCrop.gt(0);
+
+var mod13 = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY").select('precipitation')
+              .filterDate('2020-09-01', '2020-12-01')
+              .filterBounds(bounds);
+               
+var mod13_list = mod13.toList(mod13.size());
+print(mod13_list);
+
+var ndvi = ee.Image(mod13_list.get(mod13.size().subtract(1))).clip(bounds);
+print(ndvi);
+
+var ndvi_mean = mod13.mean().clip(bounds);
+print(ndvi_mean);
+
+var ndvi_std = mod13.reduce(ee.Reducer.stdDev()).clip(bounds);
+print(ndvi_std);
+
+var svi = (ndvi.subtract(ndvi_mean)).divide(ndvi_std).updateMask(cropArea).rename('SVI');
+print(svi);
+
+Map.addLayer(svi);
+
+function set_palletes(image){
+   
+    var image07 = image.gte(2)
+    var image06 = image.gte(1.5)
+    var image05 = image.gte(1)
+    var image04 = image.gte(-1)
+    var image03 = image.gte(-1.5)
+    var image02 = image.gt(-2)
+    var image01 = image.lte(-2).multiply(0)
+    
+
+    var imageOutput = (image01.add(image02).add(image03).add(image04).add(image05).add(image06).add(image06)).add(ee.Image.constant(1))
+    return imageOutput.toUint8()
+}
+
+var img_svi = set_palletes(svi);
+
+var imageVisParam = {bands:['SVI'], 
+                     min:1,
+                     max:7, 
+                     palette: ['830000','ff0000','ff9900','f8ff89','6eff72','31e704','238902']}
+                     
+Map.addLayer(img_svi, imageVisParam);
+
+Export.image.toAsset({
+   image: img_svi,
+   description : 'img_svi_agosto_novembro', 
+   assetId: 'img_svi_agosto_novembro',
+   region: bounds,
+   scale: 250, // define a resolução espacial de saída
+   crs: 'EPSG:4326',
+   maxPixels: 1e13
+ });

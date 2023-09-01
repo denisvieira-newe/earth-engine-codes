@@ -1,0 +1,64 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = /* color: #d63000 */ee.FeatureCollection(
+        [ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-54.01042116114327, -29.518771336966356],
+                  [-54.01866090723702, -29.529526035741792],
+                  [-53.987075213877645, -29.530123485484346]]]),
+            {
+              "system:index": "0"
+            }),
+        ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-54.07359254786202, -29.52056386615296],
+                  [-54.069472674815145, -29.54266911481005],
+                  [-54.055739764658895, -29.533110681261164]]]),
+            {
+              "system:index": "1"
+            }),
+        ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-54.05505311915108, -29.466774182629997],
+                  [-54.052993182627645, -29.486500382916244],
+                  [-54.03857362696358, -29.480523151857508]]]),
+            {
+              "system:index": "2"
+            }),
+        ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-54.04887330958077, -29.58149095666663],
+                  [-54.061232928721395, -29.597015514793277],
+                  [-54.03308046290108, -29.599403696334505],
+                  [-54.04818666407296, -29.585670880355828]]]),
+            {
+              "system:index": "3"
+            }),
+        ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-53.841506366221395, -29.502039533493935],
+                  [-53.863479022471395, -29.53072093169789],
+                  [-53.83669984766671, -29.53729260712004]]]),
+            {
+              "system:index": "4"
+            })]);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+function bounding_box (feature_collection){
+  function fc_to_mp(feature, newlist){
+    newlist = ee.List(newlist);
+    var coordinates = feature.geometry().coordinates();
+    
+    var list_coordinates = newlist.add(coordinates);
+    
+    return list_coordinates;
+    }
+  
+  var bounding = ee.Geometry.MultiPolygon(ee.List(feature_collection.iterate(fc_to_mp, ee.List([])))).bounds();
+  
+  return ee.Feature(ee.Geometry.MultiPolygon(ee.List(feature_collection.iterate(fc_to_mp, ee.List([])))).bounds(),
+                    {'Name': 'Retangulo envolvente da área analisada'});
+}
+
+
+var mpolygon = bounding_box(geometry);
+
+print(mpolygon);

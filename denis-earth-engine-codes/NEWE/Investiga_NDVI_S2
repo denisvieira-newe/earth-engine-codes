@@ -1,0 +1,76 @@
+var cropsInterest = ee.FeatureCollection("users/deniscortevieira/NEWE/LULC");
+
+var currentDate = Date.now();
+
+var dateFinish = ee.Date(currentDate);
+
+var s2Collection = ee.ImageCollection("COPERNICUS/S2_SR")
+                      .select(['B4', 'B8A'])
+                      .filterDate('2019-09-01', '2020-01-31')
+                      .filterBounds(cropsInterest);
+print(s2Collection);
+ 
+
+var l8Collection = ee.ImageCollection("LANDSAT/LC08/C01/T1_SR")
+                      .select(['B4', 'B5'])
+                      .filterDate('2019-09-01', '2020-01-31')
+                      .filterBounds(cropsInterest);
+print(l8Collection);                    
+
+
+
+function l8NDVI (image) {
+  return image.normalizedDifference(['B5', 'B4'])
+              .set('system:time_start', image.get('system:time_start'))
+              .set('system:index', image.get('system:index')).rename('NDVI');
+  
+}  
+
+function s2NDVI (image) {
+  return image.normalizedDifference(['B8A', 'B4'])
+              .set('system:time_start', image.get('system:time_start'))
+              .set('system:index', image.get('system:index')).rename('NDVI');
+  
+}
+
+
+var ndviL8Collection = l8Collection.map(l8NDVI);
+
+var ndviS2Collection = s2Collection.map(s2NDVI);
+
+var ndviCollection = ndviS2Collection.merge(ndviL8Collection).sort('system:index', true);
+print(ndviCollection)
+
+
+
+var mapfunc = function(feat) {
+  var geom = feat.geometry();
+  
+  var addProp = function(img, f) {
+    var newf = ee.Feature(f);
+    
+    var date = img.date().format('yyyy-MM-dd');
+    
+    var ndvi = img.reduceRegion(ee.Reducer.median(), geom, 20).get('NDVI');
+    
+    return ee.Feature(ee.Algorithms.If(ndvi,
+                                       newf.set(date, ee.Number(ndvi)),
+                                       newf.set(date, ee.Number(-1))));
+  };
+  var newfeat = ee.Feature(ndviCollection.iterate(addProp, feat));
+  
+  return newfeat;
+};
+
+var newft = cropsInterest.map(mapfunc);
+//print(newft);
+
+Export.table.toDrive({
+  collection: newft,
+  description: "investigacao_da_lavoura_ndvi_s2", 
+  folder: "investigacao_da_lavoura_ndvi_s2", 
+  fileNamePrefix: "investigacao_da_lavoura_ndvi_s2", 
+  fileFormat: 'CSV'
+});
+
+

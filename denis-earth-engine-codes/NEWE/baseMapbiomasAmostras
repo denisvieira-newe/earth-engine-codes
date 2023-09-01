@@ -1,0 +1,111 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = 
+    /* color: #98ff00 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[-75.27795610171445, 7.245211020044646],
+          [-75.27795610171445, -34.060432071073556],
+          [-33.11242875796445, -34.060432071073556],
+          [-33.11242875796445, 7.245211020044646]]], null, false);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var image = ee.Image('projects/mapbiomas-workspace/public/collection7/mapbiomas_collection70_integration_v2')
+              .select(['classification_2012',
+                       'classification_2013',
+                       'classification_2014',
+                       'classification_2015',
+                       'classification_2016',
+                       'classification_2017',
+                       'classification_2018',
+                       'classification_2019',
+                       'classification_2020',
+                       'classification_2021']);
+
+var imageReclassify = image.where(image.eq(1), 1)//Área natural florestada
+                        .where(image.eq(3), 1)//Área natural florestada
+                        .where(image.eq(4), 1)//Área natural florestada
+                        .where(image.eq(5), 1)//Área natural florestada
+                        .where(image.eq(49), 1)//Área natural florestada
+                        .where(image.eq(10), 1)//Área natural florestada
+                        .where(image.eq(11), 1)//Área natural florestada
+                        .where(image.eq(12), 1)//Área natural florestada
+                        .where(image.eq(13), 1)//Área natural florestada
+                        .where(image.eq(32), 1)//Área natural florestada
+                        .where(image.eq(29), 1)//Área natural florestada
+                        .where(image.eq(50), 1)//Área natural florestada
+                        .where(image.eq(22), 2)//Área sem vegetação
+                        .where(image.eq(23), 2)//Área sem vegetação
+                        .where(image.eq(24), 2)//Área sem vegetação
+                        .where(image.eq(25), 2)//Área sem vegetação
+                        .where(image.eq(30), 2)//Área sem vegetação
+                        .where(image.eq(26), 2)//Área sem vegetação
+                        .where(image.eq(27), 2)//Área sem vegetação
+                        .where(image.eq(31), 2)//Área sem vegetação
+                        .where(image.eq(33), 2)//Área sem vegetação
+                        .where(image.eq(15), 3)//Pastagem
+                        .where(image.eq(20), 4)//Outras áreas cultivadas
+                        .where(image.eq(21), 4)//Outras áreas cultivadas
+                        .where(image.eq(36), 4)//Outras áreas cultivadas
+                        .where(image.eq(46), 4)//Outras áreas cultivadas
+                        .where(image.eq(47), 4)//Outras áreas cultivadas
+                        .where(image.eq(48), 4)//Outras áreas cultivadas
+                        .where(image.eq(9), 4)//Outras áreas cultivadas
+                        .where(image.eq(19), 5)//Agricultura temporária
+                        .where(image.eq(39), 5)//Agricultura temporária
+                        .where(image.eq(40), 5)//Agricultura temporária
+                        .where(image.eq(41), 5)//Agricultura temporária
+                        .where(image.eq(62), 5)//Agricultura temporária
+                        
+//print("Total de elementos: ", imageReclassify.select(['classification_2021']).gt(0).reduceRegion(ee.Reducer.count()))
+                        
+var agricultura = imageReclassify.eq(ee.Number(5)).reduce(ee.Reducer.sum())
+
+var agrConsolidadaMask = agricultura.eq(ee.Number(10));
+var agrConsolidada = agricultura.eq(ee.Number(10)).updateMask(agrConsolidadaMask);
+
+var agr6A9Mask = agricultura.gte(ee.Number(6)).and(agricultura.lte(ee.Number(9)));
+var agr6A9 = agricultura.gte(ee.Number(6)).and(agricultura.lte(ee.Number(9))).mask(agr6A9Mask);
+
+var agr5Mask = agricultura.eq(ee.Number(5));
+var agr5 = agricultura.eq(ee.Number(5)).mask(agr5Mask);
+
+var agr4Mask = agricultura.eq(ee.Number(4));
+var agr4 = agricultura.eq(ee.Number(4)).mask(agr4Mask);
+
+var agr3Mask = agricultura.eq(ee.Number(3));
+var agr3 = agricultura.eq(ee.Number(3)).mask(agr3Mask);
+
+var agr2Mask = agricultura.eq(ee.Number(2));
+var agr2 = agricultura.eq(ee.Number(2)).mask(agr2Mask);
+
+var agr1Mask = agricultura.eq(ee.Number(1));
+var agr1 = agricultura.eq(ee.Number(1)).mask(agr1Mask);
+
+var outrasAreasCultivadas = imageReclassify.eq(ee.Number(4)).reduce(ee.Reducer.sum());
+
+var pastagem = imageReclassify.eq(ee.Number(3)).reduce(ee.Reducer.sum());
+
+var areaSemVegetacao = imageReclassify.eq(ee.Number(2)).reduce(ee.Reducer.sum());
+
+var areaVegetada = imageReclassify.eq(ee.Number(1)).reduce(ee.Reducer.sum())
+//print(imageReclassify.select(['classification_2021']).gt(0).toUint8().reduce(ee.Reducer.count()))
+//print(agrConsolidada.toUint8().reduce(ee.Reducer.countRuns()))
+Map.addLayer(agrConsolidada)
+
+var teste = agrConsolidada.multiply(ee.Image.constant(ee.Number(1)))
+
+Map.addLayer(teste)
+
+var a = agrConsolidada.reduceRegion({
+  reducer: ee.Reducer.count(),
+  scale:30,
+  geometry: geometry,
+  maxPixels: 1e13
+})
+
+
+
+print(a)

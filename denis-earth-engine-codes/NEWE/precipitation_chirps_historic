@@ -1,0 +1,51 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var table = ee.FeatureCollection("users/deniscortevieira/NEWE/BR_Mesorregioes_2019");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+
+var cropsInterestRS = ee.FeatureCollection(table).filter(ee.Filter.eq('SIGLA_UF', 'RS'));
+var cropsInterestSC = ee.FeatureCollection(table).filter(ee.Filter.eq('SIGLA_UF', 'SC'));
+var cropsInterestPR = ee.FeatureCollection(table).filter(ee.Filter.eq('SIGLA_UF', 'PR'));
+
+var cropsInterest = cropsInterestRS.merge(cropsInterestSC).merge(cropsInterestPR)
+print(cropsInterest)
+
+var dateStart = ee.Date('2020-01-01');
+var currentDate = Date.now();
+var dateFinish = ee.Date(currentDate);
+
+var precipitationCollection = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
+                                .select('precipitation')
+                                .filterDate(dateStart, dateFinish)
+                                .filterBounds(cropsInterest);
+
+var mapfunc = function(feat) {
+  var geom = feat.geometry();
+  var addProp = function(img, f) {
+    var newf = ee.Feature(f);
+    var date = img.date().format('yyyy-MM-dd');
+    
+    var value = img.reduceRegion(ee.Reducer.mean(), geom, 250).get('precipitation');
+    
+    var precipitation = ee.Number(value);
+    
+    return ee.Feature(ee.Algorithms.If(precipitation,
+                                       newf.set(date, ee.Number(precipitation)),
+                                       newf.set(date, ee.String('No data'))));
+  };
+  var newfeat = ee.Feature(precipitationCollection.iterate(addProp, feat));
+  //print(newfeat)
+  return newfeat;
+};
+
+var newft = cropsInterest.map(mapfunc);
+print(newft);
+
+//print(newft.getDownloadURL());
+
+Export.table.toDrive({
+  collection: newft,
+  description: "sul_precipitation_chirps", 
+  folder: "precipitation_chirps", 
+  fileNamePrefix: "sul_precipitation_chirps", 
+  fileFormat: 'CSV'
+});

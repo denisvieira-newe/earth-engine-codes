@@ -1,0 +1,235 @@
+//var point = ee.Geometry.Point([-54, -14])
+
+var features = ee.List([])
+
+var finishedDraw = false;
+
+
+var point = ee.Feature(ee.Geometry.Point([-52.981657, -24.445190]), {"grupo": "Agricultura consolidada"})
+
+print(point)
+
+var drawingTools = Map.drawingTools();
+
+var vegIndices = ee.ImageCollection('MODIS/006/MOD13Q1')
+                     .filter(ee.Filter.date('2012-07-01', '2022-03-30'))
+                     .select(['NDVI']);
+
+var imgCollectionTenLandsat = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function(image){return image.rename(['SWIR', 'NIR', 'RED'])})
+                          .merge(ee.ImageCollection("LANDSAT/LC09/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function(image){return image.rename(['SWIR', 'NIR', 'RED'])}))
+                          .filterDate('2021-11-01', '2022-02-28')
+                          .filterBounds(point.geometry())
+                          .mean()
+                          .clip(point.buffer(1000))
+
+print(imgCollectionTenLandsat.select("NIR").reduceRegion({
+  "reducer":ee.Reducer.percentile([0,2,10,90,98,100]),
+  "scale": 30,
+  "geometry": point.geometry().buffer(1000)
+  
+}))
+
+var imgCollectionTenSentinel = ee.ImageCollection("COPERNICUS/S2_SR").select(['B11', 'B8A', 'B4'])
+                                    .map(function(image){return image.rename(['SWIR', 'NIR', 'RED'])})
+                                    .filterDate('2021-11-01', '2022-02-28')
+                                    .filterBounds(point.geometry())
+                                    .mean()
+                                    .clip(point.buffer(1000))
+
+
+var NAMES = [
+  'crop_year_ten',
+  'crop_year_nine',
+  'crop_year_eight',
+  'crop_year_seven',
+  'crop_year_six',
+  'crop_year_five',
+  'crop_year_four',
+  'crop_year_three',
+  'crop_year_two',
+  'crop_year_one'
+  
+];
+
+var maps = [];
+
+NAMES.forEach(function(index) {
+  var map = ui.Map();
+  map.centerObject(point, 16);
+  maps.push(map);
+});
+
+var linker = ui.Map.Linker(maps);
+
+maps[0].add(ui.Label("Crop year - 2021/22", {position: 'bottom-center', fontWeight: 'bold'}));
+//maps[0].add(ui.Label("imgDateOne", {position: 'top-center', fontWeight: 'bold'}));
+maps[0].addLayer(imgCollectionTenLandsat, null, "Landsat");
+maps[0].addLayer(imgCollectionTenSentinel, null, "Sentinel");
+maps[0].addLayer(point);
+maps[0].drawingTools().setDrawModes(['polygon']).getShown();
+maps[0].drawingTools().setLinked(true);
+maps[0].setControlVisibility({zoomControl: false});
+
+maps[1].add(ui.Label("Crop year - 2020/21", {position: 'bottom-center', fontWeight: 'bold'}));
+maps[1].drawingTools().setDrawModes(['polygon']).getShown();
+maps[1].drawingTools().setLinked(true);
+maps[1].setControlVisibility({zoomControl: false});
+//maps[1].addLayer(imgSecond, {bands: bandsTwo, min: minTwo, max: maxTwo});
+//maps[1].addLayer(obj1);
+
+maps[2].add(ui.Label("Crop year - 2019/20", {position: 'bottom-center', fontWeight: 'bold'}));
+maps[2].drawingTools().setDrawModes(['polygon']).getShown();
+maps[2].drawingTools().setLinked(true);
+maps[2].setControlVisibility({zoomControl: false});
+//maps[2].addLayer(imgThird, {bands: bandsThree, min: minThree, max: maxThree});
+//maps[2].addLayer(obj1);
+
+
+maps[3].add(ui.Label("Crop year - 2018/19", {position: 'bottom-center', fontWeight: 'bold'}));
+maps[3].drawingTools().setDrawModes(['polygon']).getShown();
+maps[3].drawingTools().setLinked(true);
+maps[3].setControlVisibility({zoomControl: false});
+//maps[3].addLayer(imgFourth, {bands: bandsFour, min: minFour, max: maxFour});
+//maps[3].addLayer(obj1);
+
+maps[4].add(ui.Label("Crop year - 2017/18", {position: 'bottom-center', fontWeight: 'bold'}));
+maps[4].drawingTools().setDrawModes(['polygon']).getShown();
+maps[4].drawingTools().setLinked(true);
+maps[4].setControlVisibility({zoomControl: false});
+//maps[2].addLayer(imgThird, {bands: bandsThree, min: minThree, max: maxThree});
+//maps[2].addLayer(obj1);
+
+
+maps[5].add(ui.Label("Crop year - 2016/17", {position: 'bottom-center', fontWeight: 'bold'}));
+maps[5].drawingTools().setDrawModes(['polygon']).getShown();
+maps[5].drawingTools().setLinked(true);
+maps[5].setControlVisibility({zoomControl: false});
+//maps[3].addLayer(imgFourth, {bands: bandsFour, min: minFour, max: maxFour});
+//maps[3].addLayer(obj1);
+
+maps[6].add(ui.Label("Crop year - 2015/16", {position: 'bottom-center', fontWeight: 'bold'}));
+maps[6].drawingTools().setDrawModes(['polygon']).getShown();
+maps[6].drawingTools().setLinked(true);
+maps[6].setControlVisibility({zoomControl: false});
+//maps[3].addLayer(imgFourth, {bands: bandsFour, min: minFour, max: maxFour});
+//maps[3].addLayer(obj1);
+
+maps[7].add(ui.Label("Crop year - 2014/15", {position: 'bottom-center', fontWeight: 'bold'}));
+maps[7].drawingTools().setDrawModes(['polygon']).getShown();
+maps[7].drawingTools().setLinked(true);
+maps[7].setControlVisibility({zoomControl: false});
+//maps[3].addLayer(imgFourth, {bands: bandsFour, min: minFour, max: maxFour});
+//maps[3].addLayer(obj1);
+
+maps[8].add(ui.Label("Crop year - 2013/14", {position: 'bottom-center', fontWeight: 'bold'}));
+maps[8].drawingTools().setDrawModes(['polygon']).getShown();
+maps[8].drawingTools().setLinked(true);
+maps[8].setControlVisibility({zoomControl: false});
+//maps[3].addLayer(imgFourth, {bands: bandsFour, min: minFour, max: maxFour});
+//maps[3].addLayer(obj1);
+
+maps[9].add(ui.Label("Crop year - 2012/13", {position: 'bottom-center', fontWeight: 'bold'}));
+maps[9].drawingTools().setDrawModes(['polygon']).getShown();
+maps[9].drawingTools().setLinked(true);
+maps[9].setControlVisibility({zoomControl: false});
+//maps[3].addLayer(imgFourth, {bands: bandsFour, min: minFour, max: maxFour});
+//maps[3].addLayer(obj1);
+
+//maps[10].add(ui.Label("nameFour", {position: 'bottom-center', fontWeight: 'bold'}));
+//maps[10].add(ui.Label("imgDateFour", {position: 'top-center', fontWeight: 'bold'}));
+//maps[3].addLayer(imgFourth, {bands: bandsFour, min: minFour, max: maxFour});
+//maps[3].addLayer(obj1);
+
+// Painel com opções de manipulação de dados
+var panel = ui.Panel({
+  layout: ui.Panel.Layout.flow('horizontal'),
+  style: {height: '220px'}
+});
+
+var mapGrid = ui.Panel(
+  [ ui.Panel(
+    [
+       ui.Panel([maps[0], maps[5]], null, {stretch: 'both'}),
+    ui.Panel([maps[1], maps[6]], null, {stretch: 'both'}),
+    ui.Panel([maps[2], maps[7]], null, {stretch: 'both'}),
+    ui.Panel([maps[3], maps[8]], null, {stretch: 'both'}),
+    ui.Panel([maps[4], maps[9]], null, {stretch: 'both'})
+      ],
+    ui.Panel.Layout.Flow('horizontal'), {stretch: 'both'}
+    ),
+    panel
+  ],
+  ui.Panel.Layout.Flow('vertical'), {stretch: 'both'}
+);
+
+
+var chart = ui.Chart.image
+        .series({
+          imageCollection: vegIndices,
+          region: point,
+          reducer: ee.Reducer.mean(),
+          scale: 250,
+          xProperty: 'system:time_start'
+        })
+        .setSeriesNames(['NDVI'])
+        .setOptions({
+          title: 'NDVI',
+          hAxis: {title: 'Date', titleTextStyle: {italic: false, bold: true}},
+          vAxis: {
+            title: 'NDVI (x 10000)',
+            titleTextStyle: {italic: false, bold: true},
+            viewWindow: {
+              max:10000,
+              min:0
+            }
+          },
+          lineWidth: 2,
+          colors: ['1d6b99'],
+          curveType: 'function'
+        })
+
+
+panel.add(
+  ui.Panel(chart, null, {width: '2000px'})
+  );
+  
+panel.add(ui.Label('Grupo: '+point.get("grupo").getInfo()));
+
+panel.add(ui.Button({
+  label: 'Finalizar desenho',
+  onClick: function(){
+    print(drawingTools.layers().length())
+    if(drawingTools.layers().length()>0){
+      print(drawingTools.layers().get(0).geometries().get(0))
+      
+      features.add(ee.Feature(drawingTools.layers().get(0).geometries().get(0), point.copyProperties()));
+      finishedDraw = true;
+    }else{
+      print("desenhe um poligono")
+    }
+  }
+}));
+
+
+panel.add(ui.Button({
+  label: 'Proxima amostra',
+  onClick: function(){
+    //print("Proxima amostra")
+    
+    if(finishedDraw){
+      //print(drawingTools.layers().getInfo())
+      //features.add(ee.Feature(drawingTools.layers(), point.copyProperties()))
+      drawingTools.layers().reset();
+      finishedDraw = false;
+      
+    }else{
+      print('desenhe um poligono antes de chamar a proxima amostra')
+    }
+  }
+}));
+
+
+// Adicionando o painel na interface
+//ui.root.add(panel);
+ui.root.widgets().reset([mapGrid]);
+print(ui.root.widgets())

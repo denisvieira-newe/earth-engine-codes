@@ -1,0 +1,23 @@
+var point = ee.Geometry.Point([-51.713352, -30.836340])
+var polygon = ee.Geometry.Polygon([[-51.71458425729379,-30.84383322034463],
+                                   [-51.70781002508105,-30.84490588489755],
+                                   [-51.70655530516363,-30.84429502028448],
+                                   [-51.71593355330707,-30.82516417611817],
+                                   [-51.71979278035511,-30.82714690153088],
+                                   [-51.71458425729379,-30.84383322034463]])
+
+//Map.addLayer(point)
+
+var ic = ee.ImageCollection("COPERNICUS/S2_SR").filterBounds(point).filterDate("2021-11-01", "2022-03-31")
+var ic5 = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").filterBounds(point).filterDate("2021-11-01", "2022-03-31")
+print(ic, ic5)
+
+
+Map.addLayer(ee.Image("COPERNICUS/S2_SR/20220112T133231_20220112T133225_T22JDL"), {bands: ['B8A', 'B11', 'B4']}, "Falsa Cor")
+Map.addLayer(ee.Image("COPERNICUS/S2_SR/20220112T133231_20220112T133225_T22JDL"), {bands: ['B4', 'B3', 'B2']}, "Cor Verdadeira")
+Map.addLayer(ee.FeatureCollection(ee.Feature(polygon)).style({color: 'black', fillColor: '11ffee00'}), null, "AOI")
+Map.centerObject(polygon, 15)
+
+//print(geometry.area().getInfo()/10000, polygon.area().getInfo()/10000)
+//{bands: ['SR_B5', 'SR_B6', 'SR_B4']}
+//{bands: ['SR_B4', 'SR_B3', 'SR_B2']}

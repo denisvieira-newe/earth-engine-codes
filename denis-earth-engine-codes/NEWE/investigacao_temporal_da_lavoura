@@ -1,0 +1,203 @@
+var interestCrops = ee.FeatureCollection("users/deniscortevieira/NEWE/analise_Gabriel");
+print(interestCrops);
+
+//-------------Dados MapBiomas Amazonia--------------------------------------
+//Produto MapBiomas Amazonia, consiste em uma imagem com 18 bandas,
+//onde cada banda se refere a classificação de uso e cobertura de um ano
+
+var mapBiomas = ee.Image("projects/mapbiomas-workspace/public/collection4_1/mapbiomas_collection41_integration_v1");
+print(mapBiomas);
+
+//-------------Transformação da imagem 'mapBiomas' em uma coleção de imagens---------
+//Cada banda será convertida em uma unica imagem com 'system:time_start', em
+//seguida as imagens serão agrupadas em uma unica coleção
+
+//Cria uma lista com os nomes das bandas da imagem 'mapBiomas'
+var bandNames = ee.List(mapBiomas.bandNames());
+
+//Função para converter a imagem em uma coleção de imagens
+var bandsToImages = function(band, newList){
+  //Declara as vaiaveis de entrada
+  band = ee.String(band);
+  newList = ee.List(newList);
+  
+  var year = ee.Number.parse(band.slice(15,19));//extrai o ano da classificação
+  var date = ee.Date.fromYMD(year, 01, 01);//cria a data de classificação
+  var image = ee.Image(mapBiomas.select(band))//cria uma imagem a partir de uma banda
+                .rename('mapBiomas')
+                .set('system:time_start', date.millis());//insere a propriedade temporal na imagem
+  
+  return ee.List(newList.add(image));
+};
+
+//Intera a função 'bandToImages' sobre a lista de bandas e imagem, salvando em uma lista que é
+//declarada como uma ImageCollection
+var collectionMapBiomas = ee.ImageCollection(ee.List(bandNames.iterate(bandsToImages, ee.List([]))))
+                              .filterDate('2008-01-01', '2018-01-01');
+
+print('uso da terra', collectionMapBiomas);
+
+
+
+var mapfunc = function(feat) {
+  var geom = feat.geometry();
+  var addProp = function(img, f) {
+    var newf = ee.Feature(f);
+    
+    var date = img.date().format('yyyy');
+    
+    var lulcYear = ee.String('LULC_')
+                      .cat(ee.String(date));
+                              
+    var classMode = img.reduceRegion(ee.Reducer.mode(), geom, 30).get('mapBiomas');
+    
+    var classNumber = ee.Number(classMode).toInt();
+    
+    function classMB(classNumber){
+      if(classNumber==1){
+        classNumber = ee.String('Floresta');
+      }
+      
+      if(classNumber==2){
+        classNumber =  ee.String('Floresta Natural');
+      }
+      
+      if(classNumber==3){
+        classNumber =  ee.String('Formação Florestal');
+      }
+      
+      if(classNumber==4){
+        classNumber =  ee.String('Formação Savânica');
+      }
+      
+      if(classNumber==5){
+        classNumber =  ee.String('Mangue');
+      }
+      
+      if(classNumber==9){
+        classNumber =  ee.String('Floresta Plantada');
+      }
+      
+      if(classNumber==10){
+        classNumber =  ee.String('Formação Natural não Florestal');
+      }
+      
+      if(classNumber==11){
+        classNumber =  ee.String('Área Úmida Natural não Florestal');
+      }
+      
+      if(classNumber==12){
+        classNumber =  ee.String('Formação Campestre');
+      }
+      
+      if(classNumber==32){
+        classNumber =  ee.String('Apicum');
+      }
+      
+      if(classNumber==29){
+        classNumber =  ee.String('Afloramento Rochoso');
+      }
+      
+      if(classNumber==13){
+        classNumber =  ee.String('Outra Formação Natural não Florestal');
+      }
+      
+      if(classNumber==14){
+        classNumber =  ee.String('Agropecuária');
+      }
+      
+      if(classNumber==15){
+        classNumber =  ee.String('Pastagem');
+      }
+      
+      if(classNumber==18){
+        classNumber =  ee.String('Agricultura');
+      }
+      
+      if(classNumber==19){
+        classNumber =  ee.String('Cultura Anual e Perene');
+      }
+      
+      if(classNumber==20){
+        classNumber =  ee.String('Cultura Semi-Perene');
+      }
+      
+      if(classNumber==21){
+        classNumber =  ee.String('Agricultura ou Pastagem');
+      }
+      
+      if(classNumber==22){
+        classNumber =  ee.String('Área não vegetada');
+      }
+      
+      if(classNumber==23){
+        classNumber =  ee.String('Praia e Duna');
+      }
+      
+      if(classNumber==24){
+        classNumber =  ee.String('Infraestrutura Urbana');
+      }
+      
+      if(classNumber==30){
+        classNumber =  ee.String('Mineração');
+      }
+      
+      if(classNumber==25){
+        classNumber =  ee.String('Outra Área não Vegetada');
+      }
+      
+      if(classNumber==26){
+        classNumber =  ee.String('Corpos Dágua');
+      }
+      
+      if(classNumber==33){
+        classNumber =  ee.String('Rio, Lago e Oceano');
+      }
+      
+      if(classNumber==31){
+        classNumber =  ee.String('Aquicultura');
+      }
+      
+      if(classNumber==27){
+        classNumber =  ee.String('Não observado');
+      }
+      
+      return classNumber;
+    }
+    
+    var className = classMB(classNumber);
+    
+    return ee.Feature(ee.Algorithms.If(className,
+                                       newf.set(lulcYear, ee.String(className)),
+                                       newf.set(lulcYear, ee.String('No data'))));
+  };
+  var newfeat = ee.Feature(collectionMapBiomas.iterate(addProp, feat));
+  
+  return newfeat;
+};
+
+var newft = interestCrops.map(mapfunc);
+print(newft);
+
+Export.table.toDrive({
+  collection: newft,
+  description: "investigacao_da_lavoura", 
+  folder: "investigacao_da_lavoura", 
+  fileNamePrefix: "investigacao_da_lavoura", 
+  fileFormat: 'CSV'
+});
+
+Export.table.toDrive({
+  collection: newft,
+  description: "investigacao_da_lavoura", 
+  folder: "investigacao_da_lavoura", 
+  fileNamePrefix: "investigacao_da_lavoura", 
+  fileFormat: 'KML'
+});
+
+
+
+
+
+
+

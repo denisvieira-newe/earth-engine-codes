@@ -1,0 +1,21 @@
+var years_classification = ['classification_2010', 'classification_2011', 'classification_2012',
+'classification_2013', 'classification_2014', 'classification_2015', 'classification_2016',
+'classification_2017', 'classification_2018', 'classification_2019']
+
+var crop_mask = ee.Image("projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+.select(years_classification).eq(39).add(ee.Image(
+    "projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+    .select(years_classification).eq(41));
+    
+print(crop_mask)
+
+var crop_area = crop_mask.reduce(ee.Reducer.sum()).gt(0)
+
+Map.addLayer(crop_area)
+
+Export.image.toDrive({'image': crop_area, 
+                      'description': 'mapbiomas_agricultura_2010',
+                      'folder': 'mapbiomas_agricultura',
+                      'scale': 30,
+                      'maxPixels': 10000000000000
+})

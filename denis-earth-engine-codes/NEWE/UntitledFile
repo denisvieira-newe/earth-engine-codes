@@ -1,0 +1,89 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = /* color: #d63000 */ee.FeatureCollection(
+        [ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-53.005986433421945, -30.1019383459096],
+                  [-53.01079295197663, -30.112927487555666],
+                  [-53.00220988312898, -30.114115429661762],
+                  [-52.9980900100821, -30.106096543233427]]]),
+            {
+              "system:index": "0"
+            })]);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+
+function modis_ndvi(feature){
+  var ndvi_modis = ee.ImageCollection("MODIS/006/MOD13Q1").select(['NDVI']);
+
+  
+  
+  
+  return feature.set('ndvi_2018', ee.Number(ndvi_modis.filterDate('2018-04-01', '2018-09-30')
+                                      .mean()
+                                      .reduceRegion({'reducer': ee.Reducer.mean(),
+                                                     'geometry': feature.geometry(),
+                                                     'scale': 250, 
+                                                     'maxPixels': 1e16})
+                                                     .get('NDVI'))
+                                                     .divide(ee.Number(10000)).getInfo())
+                .set('ndvi_2019', ee.Number(ndvi_modis.filterDate('2019-04-01', '2019-09-30')
+                                      .mean()
+                                      .reduceRegion({'reducer': ee.Reducer.mean(),
+                                                     'geometry': feature,
+                                                     'scale': 250, 
+                                                     'maxPixels': 1e16})
+                                                     .get('NDVI'))
+                                                     .divide(ee.Number(10000)).getInfo())
+                .set('ndvi_2020', ee.Number(ndvi_modis.filterDate('2020-04-01', '2020-09-30')
+                                      .mean()
+                                      .reduceRegion({'reducer': ee.Reducer.mean(),
+                                                     'geometry': feature,
+                                                     'scale': 250, 
+                                                     'maxPixels': 1e16})
+                                                     .get('NDVI'))
+                                                     .divide(ee.Number(10000)).getInfo());
+}
+
+function modis_ndvi(feature){
+  var ndvi_modis = ee.ImageCollection("MODIS/006/MOD13Q1").select(['NDVI']).filterDate('2018-04-01', '2018-09-30');
+  
+
+  
+  
+  
+  return ndvi_modis
+}
+
+var t = geometry.map(modis_ndvi);
+print(t)
+
+var ndvi_modis = ee.ImageCollection("MODIS/006/MOD13Q1").select(['NDVI']);
+
+var ndvi_2018 = ee.Number(ndvi_modis.filterDate('2018-04-01', '2018-09-30')
+                                    .mean()
+                                    .reduceRegion({'reducer': ee.Reducer.mean(),
+                                                   'geometry': geometry,
+                                                   'scale': 250, 
+                                                   'maxPixels': 1e16})
+                                                   .get('NDVI'))
+                                                   .divide(ee.Number(10000)).getInfo();
+print(ndvi_2018)
+                                                   
+var ndvi_2019 = ee.Number(ndvi_modis.filterDate('2019-04-01', '2019-09-30')
+                                    .mean()
+                                    .reduceRegion({'reducer': ee.Reducer.mean(),
+                                                   'geometry': geometry,
+                                                   'scale': 250, 
+                                                   'maxPixels': 1e16})
+                                                   .get('NDVI'))
+                                                   .divide(ee.Number(10000)).getInfo();
+print(ndvi_2019)
+                                                   
+var ndvi_2020 = ee.Number(ndvi_modis.filterDate('2020-04-01', '2020-09-30')
+                                    .mean()
+                                    .reduceRegion({'reducer': ee.Reducer.mean(),
+                                                   'geometry': geometry,
+                                                   'scale': 250, 
+                                                   'maxPixels': 1e16})
+                                                   .get('NDVI'))
+                                                   .divide(ee.Number(10000)).getInfo();
+print(ndvi_2020)

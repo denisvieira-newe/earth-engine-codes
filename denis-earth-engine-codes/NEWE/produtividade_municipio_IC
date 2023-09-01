@@ -1,0 +1,109 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = 
+    /* color: #d63000 */
+    /* shown: false */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Feature(
+        ee.Geometry.MultiPolygon(
+            [[[[-51.51063970905281, -23.24438211650722],
+               [-51.51063970905281, -23.259523107314422],
+               [-51.49141363483406, -23.259523107314422],
+               [-51.49141363483406, -23.24438211650722]]],
+             [[[-51.48996034330702, -23.168214048073786],
+               [-51.48996034330702, -23.178945209951145],
+               [-51.47760072416639, -23.178945209951145],
+               [-51.47760072416639, -23.168214048073786]]]], null, false),
+        {
+          "system:index": "0"
+        });
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var municipios = ee.FeatureCollection('users/deniscortevieira/BR_Municipios_PAM_soja_estatistica_biomassa');
+
+municipios = municipios.filterBounds(geometry.geometry());
+
+function area_municipio(feature){
+  var intersection = geometry.intersection(feature.geometry(), ee.ErrorMargin(1));
+  return feature.set('area', intersection.area())
+}
+
+var municipio = municipios.map(area_municipio).sort('area').first();
+print(municipio);
+
+var ic_2010 = ee.Number(municipio.get('2010'))
+                .multiply(ee.Number(municipio.get('standard_d')))
+                .divide(ee.Number(municipio.get('mean_2010')))
+                .multiply(1.96)
+                .round()
+print(ic_2010.round())
+
+municipios = ee.FeatureCollection('users/deniscortevieira/BR_Municipios_PAM_soja_estatistica_biomassa');
+function ic_municipio(municipio){
+  
+  var keys = ee.List(['ic_2010', 'ic_2011', 'ic_2012', 'ic_2013', 'ic_2014',
+                      'ic_2015', 'ic_2016', 'ic_2017', 'ic_2018', 'ic_2019'])
+  var values = ee.List([ee.Number(municipio.get('2010'))
+                       .multiply(ee.Number(municipio.get('standard_d')))
+                       .divide(ee.Number(municipio.get('mean_2010')))
+                       .multiply(1.96)
+                       .round(),
+                      ee.Number(municipio.get('2011'))
+                       .multiply(ee.Number(municipio.get('standard_1')))
+                       .divide(ee.Number(municipio.get('mean_2011')))
+                       .multiply(1.96)
+                       .round(),
+                      ee.Number(municipio.get('2012'))
+                       .multiply(ee.Number(municipio.get('standard_2')))
+                       .divide(ee.Number(municipio.get('mean_2012')))
+                       .multiply(1.96)
+                       .round(),
+                      ee.Number(municipio.get('2013'))
+                       .multiply(ee.Number(municipio.get('standard_3')))
+                       .divide(ee.Number(municipio.get('mean_2013')))
+                       .multiply(1.96)
+                       .round(),
+                      ee.Number(municipio.get('2014'))
+                       .multiply(ee.Number(municipio.get('standard_4')))
+                       .divide(ee.Number(municipio.get('mean_2014')))
+                       .multiply(1.96)
+                       .round(),
+                      ee.Number(municipio.get('2015'))
+                       .multiply(ee.Number(municipio.get('standard_5')))
+                       .divide(ee.Number(municipio.get('mean_2015')))
+                       .multiply(1.96)
+                       .round(),
+                      ee.Number(municipio.get('2016'))
+                       .multiply(ee.Number(municipio.get('standard_6')))
+                       .divide(ee.Number(municipio.get('mean_2016')))
+                       .multiply(1.96)
+                       .round(),
+                      ee.Number(municipio.get('2017'))
+                       .multiply(ee.Number(municipio.get('standard_7')))
+                       .divide(ee.Number(municipio.get('mean_2017')))
+                       .multiply(1.96)
+                       .round(),
+                      ee.Number(municipio.get('2018'))
+                       .multiply(ee.Number(municipio.get('standard_8')))
+                       .divide(ee.Number(municipio.get('mean_2018')))
+                       .multiply(1.96)
+                       .round(),
+                      ee.Number(municipio.get('2019'))
+                       .multiply(ee.Number(municipio.get('standard_9')))
+                       .divide(ee.Number(municipio.get('mean_2019')))
+                       .multiply(1.96)
+                       .round()])
+                           
+  var dict_feature = ee.Dictionary.fromLists(keys, values)
+  return municipio.set(dict_feature)
+}
+
+var new_muni = municipios.map(ic_municipio)
+print(new_muni.first());
+
+Export.table.toAsset(new_muni, 'Malha_municipal_com_IC_Produtividade_Soja', 'IC_Produtividade_municipal_soja')

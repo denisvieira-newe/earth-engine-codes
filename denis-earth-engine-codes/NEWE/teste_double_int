@@ -1,0 +1,29 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = 
+    /* color: #d63000 */
+    /* shown: false */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[-52.67528506054097, -28.696461636482358],
+          [-52.67528506054097, -28.722131901359194],
+          [-52.61932345165425, -28.722131901359194],
+          [-52.61932345165425, -28.696461636482358]]], null, false);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var image = ee.ImageCollection("COPERNICUS/S2_SR")
+              .filterBounds(geometry)
+              .filterDate('2021-01-01', '2021-04-01').median();
+print(image)
+
+var ndvi = image.normalizedDifference(['B8A', 'B4'])
+
+var image_int = (image.multiply(ee.Image.constant(255))).divide(ee.Image.constant(10000)).toUint8();
+print(image_int)
+
+var ndvi_int = image_int.normalizedDifference(['B8A', 'B4'])
+
+Map.addLayer(ndvi, {}, 'NDVI')
+Map.addLayer(ndvi_int, {}, 'NDVI_int')

@@ -1,0 +1,83 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = /* color: #d63000 */ee.Geometry.Point([-53.35469115408665, -23.762325397746675]),
+    image = ee.Image("projects/biomass-yield-images/assets/ndvi_safra_2011_2021");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var nin = require('users/denisvieira/NEWE:cropNDVIModule.js');
+
+function applyScaleFactor(image){
+  var opticalBands = image.multiply(0.0000275).add(-0.2);
+  return opticalBands
+}
+
+
+var l8Collection = ee.ImageCollection("LANDSAT/LC08/C01/T1_SR")
+                      .select(['B4', 'B5', 'B6'])
+                      .filterDate('2020-11-01', "2021-03-31")
+                      //.filterMetadata("CLOUD_COVER", "less_than", 5)
+                      .filterBounds(geometry).map(nin.ndvi_l8);
+print(l8Collection);
+
+
+var l8New = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2")
+                      .select(['SR_B4', 'SR_B5', 'SR_B6'])
+                      .filterDate('2020-11-01', "2021-03-31")
+                      //.filterMetadata("CLOUD_COVER", "less_than", 5)
+                      .filterBounds(geometry);
+print(l8New);
+
+var ndvil8 = l8New.map(nin.ndvi_l8_l9);
+
+var l8Scaled = l8New.map(applyScaleFactor).map(nin.ndvi_l8_l9);
+
+var s2_ten = ee.ImageCollection('COPERNICUS/S2_SR').select(['B4', 'B8A', 'B11'])
+                                                   .filterDate('2020-11-01', "2021-03-31")
+                                                   .filterBounds(bounds);
+
+
+Map.addLayer(l8Collection.merge(s2_ten.map(nin.ndvi_s2)).max().multiply(ee.Image.constant(10000)).toInt16(), null, "L8 - Antigo")
+//Map.addLayer(l8Collection.first().normalizedDifference(["B5", "B4"]), null, "NDVI L8 - Antigo")
+Map.addLayer(ndvil8.merge(s2_ten.map(nin.ndvi_s2)).max(), null, "L8 - Novo")
+//Map.addLayer(l8New.first().normalizedDifference(["SR_B5", "SR_B4"]), null, "NDVI L8 - Novo")
+Map.addLayer(l8Scaled.max().multiply(ee.Image.constant(10000)).toInt16(), null, "L8 - Novo Scaled")
+//Map.addLayer(l8Scaled.first().normalizedDifference(["SR_B5", "SR_B4"]), null, "NDVI L8 - Novo Scaled")
+Map.addLayer(image.select(["NDVI_2020_21"]))
+
+
+var month_start = 1
+var day_start = 4
+
+var month_finish = 7
+var day_finish = 31
+
+var bounds = ee.FeatureCollection('users/deniscortevieira/LimitePolitico/Brasil_IBGE');
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+var date_start_ten = ee.Date.fromYMD(2021, month_start, day_start);      
+var date_finish_ten = ee.Date.fromYMD(2022, month_finish, day_finish);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////                                                    
+var l8_ten = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").select(['SR_B4', 'SR_B5', 'SR_B6'])
+                                                          .filterDate(date_start_ten, date_finish_ten)
+                                                          .filterBounds(bounds);
+l8_ten = l8_ten.map(applyScaleFactor) 
+var l9_ten = ee.ImageCollection('LANDSAT/LC09/C02/T1_L2').select(['SR_B4', 'SR_B5', 'SR_B6'])
+                                                          .filterDate(date_start_ten, date_finish_ten)
+                                                          .filterBounds(bounds);
+                                                          
+var s2_ten = ee.ImageCollection('COPERNICUS/S2_SR').select(['B4', 'B8A', 'B11'])
+                                                   .filterDate(date_start_ten, date_finish_ten)
+                                                   .filterBounds(bounds);
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+var nin = require('users/denisvieira/NEWE:cropNDVIModule.js');
+
+var ndvi_first_crop = l8_ten.map(nin.ndvi_l8_l9)
+                           .merge(l9_ten.map(nin.ndvi_l8_l9))
+                           .merge(s2_ten.map(nin.ndvi_s2))
+                           .max().multiply(ee.Image.constant(10000)).toInt16().rename('NDVI_2021_22').clip(bounds)
+print(ndvi_first_crop)

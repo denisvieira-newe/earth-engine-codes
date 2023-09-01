@@ -1,0 +1,78 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var table = ee.FeatureCollection("users/deniscortevieira/LimitePolitico/municipios_BR");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var estado = ee.String('TO')//escreva a sigla do estado em letras maiusculas e RUN... 
+
+var centroids = table.map(function(feature){
+  return ee.Feature(feature.centroid());
+})
+
+var cropsInterest = centroids.filter(ee.Filter.eq('SIGLA_UF', estado));
+print(cropsInterest)
+
+var dateStart = ee.Date('1981-01-01');
+var currentDate = Date.now();
+var dateFinish = ee.Date('2021-01-01');
+
+var precipitationCollection = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
+           .filterDate('1981-01-01', '2021-01-01')
+           .select('precipitation').filterBounds(cropsInterest);
+           
+//print(precipitationCollection)              
+// Difference in days between start and finish
+var diff = dateFinish.difference(dateStart, 'day');
+
+// Make a list of all dates
+var range = ee.List.sequence(0, diff.subtract(1))
+              .map(function(day){return dateStart.advance(day,'day')});
+
+// Funtion for iteraton over the range of dates
+var day_mosaics = function(date, newlist) {
+  // Cast
+  date = ee.Date(date);
+  newlist = ee.List(newlist);
+  
+  // Filter collection between date and the next day
+  var filtered = precipitationCollection.filterDate(date, date.advance(1,'day'));
+  
+  // Make the mosaic
+  var image = ee.Image(filtered.sum()).set('system:time_start', date.millis());
+  
+  // Add the mosaic to a list only if the collection has images
+  return ee.List(ee.Algorithms.If(filtered.size(), newlist.add(image), newlist));
+};
+
+// Iterate over the range to make a new list, and then cast the list to an imagecollection
+var dayPrecipitation = ee.ImageCollection(ee.List(range.iterate(day_mosaics, ee.List([]))));
+print('newcol: ', dayPrecipitation);              
+
+
+var mapfunc = function(feat) {
+  var geom = feat.geometry();
+  var addProp = function(img, f) {
+    var newf = ee.Feature(f);
+    var date = img.date().format('yyyy-MM-dd');
+    //print(date)
+    var value = img.reduceRegion(ee.Reducer.median(), geom, 5000).get('precipitation');
+    
+    var precipitation = ee.Number(value);
+    
+    return ee.Feature(ee.Algorithms.If(precipitation,
+                                       newf.set(date, ee.Number(precipitation)),
+                                       newf.set(date, ee.Number(0))));
+  };
+  var newfeat = ee.Feature(dayPrecipitation.iterate(addProp, feat));
+  //print(newfeat)
+  return newfeat;
+};
+
+var newft = cropsInterest.map(mapfunc);
+//print(newft);
+
+Export.table.toDrive({
+  collection: newft,
+  description: "precipitacao_"+estado.replace(" ", "", 'g').getInfo(), 
+  folder: "projeto_precipitation_chirps", 
+  fileNamePrefix: "precipitacao_"+estado.replace(" ", "", 'g').getInfo(), 
+  fileFormat: 'CSV'
+});

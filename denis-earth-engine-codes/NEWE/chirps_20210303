@@ -1,0 +1,116 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var table = ee.FeatureCollection("users/deniscortevieira/chirps_teste_fc"),
+    geometry = 
+    /* color: #d63000 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.FeatureCollection(
+        [ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-53.35724422315872, -30.176201920735974],
+                  [-53.35724422315872, -30.18555057987932],
+                  [-53.34127971510208, -30.18555057987932],
+                  [-53.34127971510208, -30.176201920735974]]], null, false),
+            {
+              "system:index": "0"
+            })]);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var collection = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
+                    .select(['precipitation'])
+                    .filterBounds(geometry.geometry())
+                    .filter(ee.Filter.calendarRange(1990,2020,'year'))
+                    .filter(ee.Filter.calendarRange(15,45,'day_of_year'));
+                    
+print(collection)
+
+var doy = ee.Date('2020-12-01').getRelative('day', 'year');
+print(doy)
+
+function extract_precipitation(feature, drought_limit, day_start, month_start, year_start, day_finish, month_finish, year_finish){
+  var doy_start = ee.Number(ee.Date.fromYMD(2020, month_start, day_start).getRelative('day', 'year'))
+  var doy_finish = ee.Number(ee.Date.fromYMD(2020, month_finish, day_finish).getRelative('day', 'year'))
+  var collection = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
+                    .select(['precipitation'])
+                    .filterBounds(feature.geometry())
+                    .filter(ee.Filter.calendarRange(year_start,year_finish,'year'))
+                    .filter(ee.Filter.calendarRange(doy_start,doy_finish,'day_of_year'));
+ 
+  var mapfunc = function(feat) {
+    var geom = feat.geometry();
+    var addProp = function(img, f) {
+      var newf = ee.Feature(f);
+      var date = img.date().format('yyyy-MM-dd');
+      
+      var value = ee.Number(img.reduceRegion(ee.Reducer.mean(), geom, 5000).get('precipitation'));
+      
+      var precipitation = ee.Number(ee.Algorithms.If(value.gt(25),ee.Number(25),ee.Number(value)));
+      precipitation = ee.Number(ee.Algorithms.If(precipitation.lt(0),ee.Number(0),ee.Number(precipitation)));
+      
+      return ee.Feature(ee.Algorithms.If(precipitation,
+                                         newf.set(date, ee.Number(precipitation)),
+                                         newf.set(date, ee.Number(0))));
+    };
+    var newfeat = ee.Feature(collection.iterate(addProp, feat));
+    //print(newfeat)
+    return newfeat;
+  };
+  
+  var newft = feature.map(mapfunc);
+  
+  return newft;
+
+}
+
+var col = extract_precipitation(geometry, 3, 15, 1, 1990, 15, 2, 2020); 
+print(col)
+
+function extract_precipitation1(feature, drought_limit, day_start, month_start, year_start, day_finish, month_finish, year_finish){
+  var doy_start = ee.Number(ee.Date.fromYMD(2020, month_start, day_start).getRelative('day', 'year'))
+  var doy_finish = ee.Number(ee.Date.fromYMD(2020, month_finish, day_finish).getRelative('day', 'year'))
+  var collection = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
+                    .select(['precipitation'])
+                    .filterBounds(feature.geometry())
+                    .filter(ee.Filter.calendarRange(year_start,year_finish,'year'))
+                    .filter(ee.Filter.calendarRange(doy_start,doy_finish,'day_of_year'));
+                    
+  var replacedVals = collection.map(function(image){
+    var currentDate = ee.Date(image.get('system:time_start'));
+    var meanImage = collection.filterDate(currentDate.advance(-5, 'day'), currentDate.advance(0, 'day')).mean().rename('mean_precipitation');
+    // replace all masked values:
+    return ee.Image(image).addBands(meanImage);
+  });
+  
+ 
+  var mapfunc = function(feat) {
+    var geom = feat.geometry();
+    var addProp = function(img, f) {
+      var newf = ee.Feature(f);
+      var date = img.date().format('yyyy-MM-dd');
+      
+      var value = ee.Number(ee.Algorithms.If(img.bandNames().contains('mean_precipitation'),
+                                             img.reduceRegion(ee.Reducer.mean(), geom, 5000).get('mean_precipitation'),
+                                             img.reduceRegion(ee.Reducer.mean(), geom, 5000).get('precipitation')));
+      
+      var precipitation = ee.Number(ee.Algorithms.If(value.gt(25),ee.Number(25),ee.Number(value)));
+      precipitation = ee.Number(ee.Algorithms.If(precipitation.lt(0),ee.Number(0),ee.Number(precipitation)));
+      
+      var drought_day = ee.Number(ee.Algorithms.If(precipitation.lt(drought_limit),ee.Number(1),ee.Number(0)));
+      
+      return ee.Feature(newf.set(date, ee.Number(drought_day)));
+    };
+    var newfeat = ee.Feature(replacedVals.iterate(addProp, feat));
+    //print(newfeat)
+    return newfeat;
+  };
+  
+  var newft = feature.map(mapfunc);
+  
+  return newft;
+
+}
+
+var col1 = extract_precipitation1(geometry, 3, 15, 1, 1990, 15, 2, 2020);
+print(col1)

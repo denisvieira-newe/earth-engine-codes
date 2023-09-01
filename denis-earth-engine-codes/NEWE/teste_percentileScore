@@ -1,0 +1,167 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = 
+    /* color: #d63000 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[-52.96302171845422, -29.961006723863637],
+          [-52.96302171845422, -30.187399467230392],
+          [-52.61626573700891, -30.187399467230392],
+          [-52.61626573700891, -29.961006723863637]]], null, false),
+    geometry2 = 
+    /* color: #ffc82d */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[-52.73375764333821, -30.079061006406082],
+          [-52.73375764333821, -30.08084352478012],
+          [-52.73118272268391, -30.08084352478012],
+          [-52.73118272268391, -30.079061006406082]]], null, false),
+    geometry3 = 
+    /* color: #00ffff */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.FeatureCollection(
+        [ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-52.76834741079426, -30.075867247325487],
+                  [-52.76834741079426, -30.077278455912044],
+                  [-52.766287474270825, -30.077278455912044],
+                  [-52.766287474270825, -30.075867247325487]]], null, false),
+            {
+              "system:index": "0"
+            }),
+        ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-52.78971925222493, -30.0749759473204],
+                  [-52.78971925222493, -30.07631289431696],
+                  [-52.78808846914387, -30.07631289431696],
+                  [-52.78808846914387, -30.0749759473204]]], null, false),
+            {
+              "system:index": "1"
+            }),
+        ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-52.70843759023762, -30.0791352786463],
+                  [-52.70843759023762, -30.080917795681987],
+                  [-52.70654931509114, -30.080917795681987],
+                  [-52.70654931509114, -30.0791352786463]]], null, false),
+            {
+              "system:index": "2"
+            })]);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+
+
+var collection = ee.ImageCollection("COPERNICUS/S2_SR").select(['B8A', 'B4'])
+                    .filterBounds(geometry).filterDate('2019-12-01', '2020-03-31');
+                    
+function ndvi(image){
+  return image.normalizedDifference(['B8A', 'B4']).rename('NDVI');
+}
+
+var ndvi_collection = collection.map(ndvi).max();
+
+var nh_ndvi = ndvi_collection.clip(geometry);
+
+var crop_ndvi = ndvi_collection.clip(geometry);
+
+var features = geometry3;
+
+function ndvi_ranking(feature_collection, image){
+  image = ee.Image(image).toUint16();
+  
+  var percentiles = [1,2,3,4,5,6,7,8,9,10,
+                   11,12,13,14,15,16,17,18,19,20,
+                   21,22,23,24,25,26,27,28,29,30,
+                   31,32,33,34,35,36,37,38,39,40,
+                   41,42,43,44,45,46,47,48,49,50,
+                   51,52,53,54,55,56,57,58,59,60,
+                   61,62,63,64,65,66,67,68,69,70,
+                   71,72,73,74,75,76,77,78,79,80,
+                   81,82,83,84,85,86,87,88,89,90,
+                   91,92,93,94,95,96,97,98,99,100];
+                   
+  var ndvi_percentiles = ee.Dictionary(image.reduceRegion({
+                                     reducer: ee.Reducer.percentile(percentiles),
+                                     geometry: geometry,
+                                     scale:30
+                                     }));
+  
+  function mean_by_feature(feature){
+    var region = feature.geometry();
+    
+    var crop_ndvi_mean = crop_ndvi.reduceRegion({reducer: ee.Reducer.mean(),
+                                                 geometry: region,
+                                                 scale:30
+                                                });
+                                                
+    var list_percentile = ndvi_percentiles.values(ndvi_percentiles.keys())
+                                      .cat(crop_ndvi_mean.values(crop_ndvi_mean.keys()))
+                                      .sort(); 
+    
+    var ranking = list_percentile.indexOf(crop_ndvi_mean.values(crop_ndvi_mean.keys()).get(0));
+    
+    var keys = ee.List(['rank_position']);
+    var values = ee.List([rank_position]);
+                           
+    var dict_feature = ee.Dictionary.fromLists(keys, values);
+        
+          
+    return ee.Feature(feature.set(dict_feature));
+    
+  }
+                                     
+  return ee.FeatureCollection(feature_collection).map(mean_by_feature);
+  
+}
+
+var percentiles = [1,2,3,4,5,6,7,8,9,10,
+                   11,12,13,14,15,16,17,18,19,20,
+                   21,22,23,24,25,26,27,28,29,30,
+                   31,32,33,34,35,36,37,38,39,40,
+                   41,42,43,44,45,46,47,48,49,50,
+                   51,52,53,54,55,56,57,58,59,60,
+                   61,62,63,64,65,66,67,68,69,70,
+                   71,72,73,74,75,76,77,78,79,80,
+                   81,82,83,84,85,86,87,88,89,90,
+                   91,92,93,94,95,96,97,98,99,100];
+                   
+var ndvi_percentiles = ee.Dictionary(nh_ndvi.reduceRegion({
+                                     reducer: ee.Reducer.percentile(percentiles),
+                                     geometry: geometry,
+                                     scale:30
+                                     }));
+print(ndvi_percentiles);
+
+     
+var crop_ndvi_mean = crop_ndvi.reduceRegion({reducer: ee.Reducer.count(),
+                                             geometry: geometry,
+                                             scale:30
+                                            });
+print('contaghem', crop_ndvi_mean);
+
+var list_percentile = ndvi_percentiles.values(ndvi_percentiles.keys())
+                                      .cat(crop_ndvi_mean.values(crop_ndvi_mean.keys()))
+                                      .sort();
+print(list_percentile);
+
+var score = (ee.Number(100).subtract(list_percentile.indexOf(crop_ndvi_mean.values(crop_ndvi_mean.keys()).get(0)))).getInfo();
+print(score)
+
+var mean_rank = (crop_ndvi_mean.values(crop_ndvi_mean.keys()).get(0)).getInfo()
+print(mean_rank)

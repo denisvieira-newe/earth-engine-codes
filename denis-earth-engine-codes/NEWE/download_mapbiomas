@@ -1,0 +1,52 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var table = ee.FeatureCollection("users/deniscortevieira/LimitePolitico/Brasil_IBGE"),
+    geometry = 
+    /* color: #d63000 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[-51.670128003729786, -16.04124066612405],
+          [-51.670128003729786, -19.74154584975871],
+          [-47.165733472479786, -19.74154584975871],
+          [-47.165733472479786, -16.04124066612405]]], null, false);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var mapbiomas = ee.Image("projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                  .select(['classification_2019',
+                           'classification_2018',
+                           'classification_2017',
+                           'classification_2016',
+                           'classification_2015',
+                           'classification_2014',
+                           'classification_2013',
+                           'classification_2012',
+                           'classification_2011',
+                           'classification_2010']);
+                  
+print(mapbiomas);
+
+Export.image.toDrive({
+   image: mapbiomas,
+   folder: 'mapbiomas_to_postgis', //cria a pasta de saída no drive
+   description:'mapbiomas_to_postgis_2010_2019',
+   scale: 30, // define a resolução espacial de saída
+   fileFormat: 'GeoTIFF',
+   maxPixels: 1e13,
+   region: geometry
+ });//
+
+//var mapbiomas = ee.Image('users/INPE/ndvi_safra_2010_2020');
+//                  
+//print(mapbiomas)
+//
+//Export.image.toDrive({
+//   image: mapbiomas,
+//   folder: 'biomassaNDVI_to_postgis', //cria a pasta de saída no drive
+//   description:'biomassaNDVI_to_postgis_2010_2020',
+//   scale: 30, // define a resolução espacial de saída
+//   fileFormat: 'GeoTIFF',
+//   maxPixels: 1e13,
+//   region: geometry
+// });//

@@ -1,0 +1,109 @@
+var panel = ui.Panel({
+  layout: ui.Panel.Layout.flow('vertical'),
+  style: {width: '600px'}
+});
+// Adicionando o painel na interface
+ui.root.add(panel);
+
+Map.addLayer(ee.Image('CGIAR/SRTM90_V4')).setShown(false);
+
+var checkbox1 = ui.Checkbox('100%', false);
+var checkbox2 = ui.Checkbox('98%', false);
+var checkbox3 = ui.Checkbox('90%', false);
+var checkbox4 = ui.Checkbox('1 DP', false);
+var checkbox5 = ui.Checkbox('2 DP', false);
+var checkbox6 = ui.Checkbox('3 DP', false);
+
+var contrasteLabel = ui.Label({value:'Contraste', style:{position: 'bottom-left', fontSize: '12px', fontWeight: 'bold'}});
+var contrastButton = panel.add(ui.Panel([contrasteLabel, checkbox1, checkbox2, checkbox3, checkbox4, checkbox5, checkbox6], ui.Panel.Layout.flow('horizontal'), {shown: true}), {position: 'bottom-left', fontWeight: 'bold'});
+
+checkbox1.onChange(function(checked) {
+  // Shows or hides the first map layer based on the checkbox's value.
+  Map.layers().get(0).setShown(checked);
+  print(1);
+  if (checked){
+    checkbox2.setValue(false, false);
+    checkbox3.setValue(false, false);
+    checkbox4.setValue(false, false);
+    checkbox5.setValue(false, false);
+    checkbox6.setValue(false, false);
+  }
+  
+});
+
+checkbox2.onChange(function(checked) {
+  // Shows or hides the first map layer based on the checkbox's value.
+  print(2);
+  if (checked){
+    checkbox1.setValue(false, true);
+    checkbox3.setValue(false, false);
+    checkbox4.setValue(false, false);
+    checkbox5.setValue(false, false);
+    checkbox6.setValue(false, false);
+  }
+  else{
+    checkbox1.setValue(true, true);
+  }
+});
+
+checkbox3.onChange(function(checked) {
+  print(3);
+  if (checked){
+    checkbox1.setValue(false, true);
+    checkbox2.setValue(false, false);
+    checkbox4.setValue(false, false);
+    checkbox5.setValue(false, false);
+    checkbox6.setValue(false, false);
+  }
+  else{
+    checkbox1.setValue(true, true);
+  }
+});
+
+checkbox4.onChange(function(checked) {
+  print(4);
+  if (checked){
+    checkbox1.setValue(false, true);
+    checkbox2.setValue(false, false);
+    checkbox3.setValue(false, false);
+    checkbox5.setValue(false, false);
+    checkbox6.setValue(false, false);
+  }
+  else{
+    checkbox1.setValue(true);
+  }
+});
+
+checkbox5.onChange(function(checked) {
+  print(5);
+  if (checked){
+    checkbox1.setValue(false, true);
+    checkbox2.setValue(false, false);
+    checkbox3.setValue(false, false);
+    checkbox4.setValue(false, false);
+    checkbox6.setValue(false, false);
+  }
+  else{
+    checkbox1.setValue(true);
+  }
+});
+
+checkbox6.onChange(function(checked) {
+  print(6);
+  if (checked){
+    checkbox1.setValue(false, true);
+    checkbox2.setValue(false, false);
+    checkbox3.setValue(false, false);
+    checkbox4.setValue(false, false);
+    checkbox5.setValue(false, false);
+  }
+  else{
+    checkbox1.setValue(true);
+  }
+});
+
+//checkbox1.setValue(true);
+//var a = ee.list(checkbox1, checkbox2, checkbox3, checkbox4, checkbox5, checkbox6);
+//print(checkbox1.getValue());
+//print(checkbox2.getDisabled());
+

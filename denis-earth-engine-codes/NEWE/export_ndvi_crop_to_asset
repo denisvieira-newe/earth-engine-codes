@@ -1,0 +1,140 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = 
+    /* color: #98ff00 */
+    /* shown: false */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[-54.55269550734772, -28.029509954510445],
+          [-54.55269550734772, -30.01792596353597],
+          [-52.09175800734772, -30.01792596353597],
+          [-52.09175800734772, -28.029509954510445]]], null, false),
+    table = ee.FeatureCollection("users/deniscortevieira/LimitePolitico/Brasil_IBGE");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var month_start = 1
+var day_start = 4
+
+var month_finish = 7
+var day_finish = 31
+
+var bounds = ee.FeatureCollection('users/deniscortevieira/LimitePolitico/Brasil_IBGE');
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+var date_start_ten = ee.Date.fromYMD(2021, month_start, day_start);      
+var date_finish_ten = ee.Date.fromYMD(2022, month_finish, day_finish);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function applyScaleFactor(image){
+  var opticalBands = image.multiply(0.0000275).add(-0.2);
+  return opticalBands
+}
+
+//////////////////////////////////////////////////////////////                                                    
+var l8_ten = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").select(['SR_B4', 'SR_B5', 'SR_B6'])
+                                                          .filterDate(date_start_ten, date_finish_ten)
+                                                          .filterBounds(bounds);
+l8_ten = l8_ten.map(applyScaleFactor) 
+var l9_ten = ee.ImageCollection('LANDSAT/LC09/C02/T1_L2').select(['SR_B4', 'SR_B5', 'SR_B6'])
+                                                          .filterDate(date_start_ten, date_finish_ten)
+                                                          .filterBounds(bounds);
+                                                          
+var s2_ten = ee.ImageCollection('COPERNICUS/S2_SR').select(['B4', 'B8A', 'B11'])
+                                                   .filterDate(date_start_ten, date_finish_ten)
+                                                   .filterBounds(bounds);
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+var nin = require('users/denisvieira/NEWE:cropNDVIModule.js');
+
+var ndvi_first_crop = l8_ten.map(nin.ndvi_l8_l9)
+                           .merge(l9_ten.map(nin.ndvi_l8_l9))
+                           .merge(s2_ten.map(nin.ndvi_s2))
+                           .max().multiply(ee.Image.constant(10000)).toInt16().rename('NDVI_2021_22').clip(bounds)
+print(ndvi_first_crop)
+
+Export.image.toCloudStorage({
+   image: ndvi_first_crop,
+   description : 'ndvi_2021_2022_first_crop',
+   bucket: "ndvi_timeseries/2021_22_1",
+   region: bounds,
+   scale: 30, // define a resolução espacial de saída
+   maxPixels: 1e13
+ });
+
+//var ndvi_2011_2021 = ((l5_one.map(nin.ndvi_l5_7)).merge(l7_one.map(nin.ndvi_l5_7))
+//                           .merge(l8_one.map(nin.ndvi_l8))
+//                           .merge(s2_one.map(nin.ndvi_s2)))
+//                           .max().multiply(ee.Image.constant(10000)).toInt16().rename('NDVI_2010_10')
+//                           .addBands(((l5_two.map(nin.ndvi_l5_7))
+//                           .merge(l7_two.map(nin.ndvi_l5_7))
+//                           .merge(l8_two.map(nin.ndvi_l8))
+//                           .merge(s2_two.map(nin.ndvi_s2)))
+//                           .max().multiply(ee.Image.constant(10000)).toInt16().rename('NDVI_2011_12'))
+//                           .addBands(((l5_three.map(nin.ndvi_l5_7))
+//                           .merge(l7_three.map(nin.ndvi_l5_7))
+//                           .merge(l8_three.map(nin.ndvi_l8))
+//                           .merge(s2_three.map(nin.ndvi_s2)))
+//                           .max().multiply(ee.Image.constant(10000)).toInt16().rename('NDVI_2012_13'))
+//                           .addBands(((l5_four.map(nin.ndvi_l5_7))
+//                           .merge(l7_four.map(nin.ndvi_l5_7))
+//                           .merge(l8_four.map(nin.ndvi_l8))
+//                           .merge(s2_four.map(nin.ndvi_s2)))
+//                           .max().multiply(ee.Image.constant(10000)).toInt16().rename('NDVI_2013_14'))
+//                           .addBands(((l5_five.map(nin.ndvi_l5_7))
+//                           .merge(l7_five.map(nin.ndvi_l5_7))
+//                           .merge(l8_five.map(nin.ndvi_l8))
+//                           .merge(s2_five.map(nin.ndvi_s2)))
+//                           .max().multiply(ee.Image.constant(10000)).toInt16().rename('NDVI_2014_15'))
+//                           .addBands(((l5_six.map(nin.ndvi_l5_7))
+//                           .merge(l7_six.map(nin.ndvi_l5_7))
+//                           .merge(l8_six.map(nin.ndvi_l8))
+//                           .merge(s2_six.map(nin.ndvi_s2)))
+//                           .max().multiply(ee.Image.constant(10000)).toInt16().rename('NDVI_2015_16'))
+//                           .addBands(((l5_seven.map(nin.ndvi_l5_7))
+//                           .merge(l7_seven.map(nin.ndvi_l5_7))
+//                           .merge(l8_seven.map(nin.ndvi_l8))
+//                           .merge(s2_seven.map(nin.ndvi_s2)))
+//                           .max().multiply(ee.Image.constant(10000)).toInt16().rename('NDVI_2016_17'))
+//                           .addBands(((l5_eight.map(nin.ndvi_l5_7))
+//                           .merge(l7_eight.map(nin.ndvi_l5_7))
+//                           .merge(l8_eight.map(nin.ndvi_l8))
+//                           .merge(s2_eight.map(nin.ndvi_s2)))
+//                           .max().multiply(ee.Image.constant(10000)).toInt16().rename('NDVI_2017_18'))
+//                           .addBands(((l5_nine.map(nin.ndvi_l5_7))
+//                           .merge(l7_nine.map(nin.ndvi_l5_7))
+//                           .merge(l8_nine.map(nin.ndvi_l8))
+//                           .merge(s2_nine.map(nin.ndvi_s2)))
+//                           .max().multiply(ee.Image.constant(10000)).toInt16().rename('NDVI_2018_19'))
+//                           .addBands(((l5_ten.map(nin.ndvi_l5_7))
+//                           .merge(l7_ten.map(nin.ndvi_l5_7))
+//                           .merge(l8_ten.map(nin.ndvi_l8))
+//                           .merge(s2_ten.map(nin.ndvi_s2)))
+//                           .max().multiply(ee.Image.constant(10000)).toInt16().rename('NDVI_2019_20'))
+//                           .clip(bounds);
+//                           
+//
+//print(ndvi_2011_2021);
+
+//var crop_ndvi_2015_2020= nin.crop_mask(ndvi_2010_2020.select(['NDVI_2015_16']), 2015)
+//                             .addBands(nin.crop_mask(ndvi_2010_2020.select(['NDVI_2016_17']), 2016))
+//                             .addBands(nin.crop_mask(ndvi_2010_2020.select(['NDVI_2017_18']), 2017))
+//                             .addBands(nin.crop_mask(ndvi_2010_2020.select(['NDVI_2018_19']), 2018))
+//                             .addBands(nin.crop_mask(ndvi_2010_2020.select(['NDVI_2019_20']), 2019));
+//
+//print(crop_ndvi_2015_2020);
+//Map.addLayer(crop_ndvi_2015_2020);
+
+//Export.image.toAsset({
+//   image: ndvi_2021_22,
+//   description : 'ndvi_2021_2022_first_crop', 
+//   assetId: 'ndvi_2021_2022_first_crop',
+//   region: bounds,
+//   scale: 30, // define a resolução espacial de saída
+//   maxPixels: 1e13
+// });

@@ -1,0 +1,44 @@
+var cropsInterest = ee.FeatureCollection("users/deniscortevieira/NEWE/lavouras_investigar");
+
+var currentDate = Date.now();
+
+var dateFinish = ee.Date(currentDate);
+
+var modis = ee.ImageCollection("MODIS/006/MOD13Q1")
+              .select('NDVI')
+              .filterDate('2008-01-01', dateFinish)
+              .filterBounds(cropsInterest);
+
+var mapfunc = function(feat) {
+  var geom = feat.geometry();
+  
+  var addProp = function(img, f) {
+    var newf = ee.Feature(f);
+    
+    var date = img.date().format('yyyy-MM-dd');
+    
+    var value = img.reduceRegion(ee.Reducer.median(), geom, 250).get('NDVI');
+    
+    var ndvi = ee.Number(value).divide(ee.Number(10000));
+    
+    return ee.Feature(ee.Algorithms.If(ndvi,
+                                       newf.set(date, ee.Number(ndvi)),
+                                       newf.set(date, ee.String('0'))));
+  };
+  var newfeat = ee.Feature(modis.iterate(addProp, feat));
+  
+  return newfeat;
+};
+
+var newft = cropsInterest.map(mapfunc);
+//print(newft);
+
+Export.table.toDrive({
+  collection: newft,
+  description: "investigacao_da_lavoura_ndvi_modis", 
+  folder: "investigacao_da_lavoura_ndvi_modis", 
+  fileNamePrefix: "investigacao_da_lavoura_ndvi_modis", 
+  fileFormat: 'CSV'
+});
+
+

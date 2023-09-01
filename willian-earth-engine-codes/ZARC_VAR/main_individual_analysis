@@ -1,0 +1,616 @@
+var Brasil = ee.FeatureCollection('projects/base-vetorial-municipio-solo/assets/Brasil_IBGE');
+Map.centerObject(Brasil, 4);
+
+var operations = ee.FeatureCollection('users/denisvieira/lote_1_ft')
+                    .merge(ee.FeatureCollection('users/denisvieira/lote_2_ft'))
+                    .merge(ee.FeatureCollection('users/denisvieira/lote_3_ft'))
+                    .merge(ee.FeatureCollection('users/denisvieira/lote_4_ft'))
+                    .merge(ee.FeatureCollection('users/denisvieira/lote_5_ft'))
+                    .merge(ee.FeatureCollection('users/denisvieira/lote_6_ft'))
+                    .merge(ee.FeatureCollection('users/denisvieira/lote_7_ft'))
+                    .merge(ee.FeatureCollection('users/denisvieira/lote_8_ft'))
+                    .merge(ee.FeatureCollection('users/denisvieira/lote_9_ft'))
+                    .merge(ee.FeatureCollection('users/denisvieira/lote_10_ft'))
+                    .merge(ee.FeatureCollection('users/denisvieira/lote_11_ft'))
+                    .merge(ee.FeatureCollection('users/denisvieira/lote_12_ft'))
+                    .merge(ee.FeatureCollection('users/denisvieira/lote_13_ft'))
+                    .merge(ee.FeatureCollection('users/Monitoramento/proposta_38577'));
+
+
+var dateStart = ee.Date("2021-01-15");
+var currentDate = Date.now();
+var dateFinish = ee.Date(currentDate);
+
+var imageCollection = ee.ImageCollection("COPERNICUS/S2_SR").select(["B8A", "B11", "B4"])
+                            .merge(ee.ImageCollection("LANDSAT/LC08/C01/T1_SR").select(['B5', 'B6', 'B4'])
+                            .map(function(image){return image.rename(["B8A", "B11", "B4"])}))
+                            .filterBounds(operations)
+                            .filterDate(dateStart, dateFinish)
+                            .sort('system:time_start');
+
+var ndviCollection = imageCollection.map(function(image) {
+  return image.select().addBands(image.normalizedDifference(['B8A', 'B4']).rename('NDVI'));
+});
+
+var visParams = {bands: ["B8A", "B11", "B4"], 
+                 gamma: 1,
+                 max: 4522.04,
+                 min: 203.96,
+                 opacity: 1
+};
+
+var generate_ndviChart = function(point){
+  // Create an NDVI chart.
+  var ndviChart = ui.Chart.image.series(ndviCollection, point, ee.Reducer.mean(), 20);
+  ndviChart.setOptions({
+      title: 'Perfil temporal do NDVI',
+      vAxis:{title: 'NDVI', viewWindow: {max:1, min:0}},
+      hAxis: {title: 'Data', format: 'MM-yy', gridlines: {count: 9}, viewWindow: {
+             max: dateStart.millis().getInfo(),
+             min: dateFinish.millis().getInfo()
+           }},
+      color: "green"
+  });
+  //panel.widgets().set(2, ndviChart);
+  // Add the chart to the map.
+  ndviChart.style().set({
+    position: 'bottom-left',
+    width: '400px',
+    height: '240px'
+  });
+  return ndviChart;
+};
+
+// Contraste por 1, 2 ou 3 desvios padrão
+var AddLayerStdDevStretch = function(img, geometryStretch, num_stddev) {
+  var stats = img.select(["B8A", "B11", "B4"],['value_B8A', 'value_B11', 'value_B4']).reduceRegion({
+    reducer: ee.Reducer.mean().combine({reducer2:ee.Reducer.stdDev(), sharedInputs:true})
+                              .setOutputs(['mean', 'stddev']),
+    geometry: geometryStretch,
+    scale: 20, 
+    bestEffort: true
+  });
+  
+  var vis_params = ee.Dictionary({
+    'min': [ee.Number(stats.get('value_B8A_mean'))
+             .subtract(ee.Number(num_stddev).multiply(ee.Number(stats.get('value_B8A_stddev')))),
+             ee.Number(stats.get('value_B11_mean'))
+             .subtract(ee.Number(num_stddev).multiply(ee.Number(stats.get('value_B11_stddev')))),
+             ee.Number(stats.get('value_B4_mean'))
+             .subtract(ee.Number(num_stddev).multiply(ee.Number(stats.get('value_B4_stddev'))))],
+             
+    'max': [ee.Number(stats.get('value_B8A_mean'))
+             .add(ee.Number(num_stddev).multiply(ee.Number(stats.get('value_B8A_stddev')))),
+             ee.Number(stats.get('value_B11_mean'))
+             .add(ee.Number(num_stddev).multiply(ee.Number(stats.get('value_B11_stddev')))),
+             ee.Number(stats.get('value_B4_mean'))
+             .add(ee.Number(num_stddev).multiply(ee.Number(stats.get('value_B4_stddev'))))]
+  });
+  var stdImage = ui.Map.Layer({
+    eeObject: img,
+    visParams: vis_params.getInfo(),
+    name: 'Imagem ' + '(' + num_stddev + ' DP'+')'
+  });
+  //Map.layers().reset([stdImage, operation_all, glebaNow]);
+  return stdImage;
+};
+
+// Contraste por corte percentual
+var AddLayerPercentStretch = function(img, geometryStretch, percent) {
+  var lower_percentile = ee.Number(100).subtract(percent).divide(2);
+  var upper_percentile = ee.Number(100).subtract(lower_percentile);
+  var stats = img.select(["B8A", "B11", "B4"],['value_B8A', 'value_B11', 'value_B4']).reduceRegion({
+    reducer: ee.Reducer.percentile({percentiles: [lower_percentile, upper_percentile]})
+                .setOutputs(['lower', 'upper']),
+    geometry: geometryStretch,
+    scale: 20, 
+    bestEffort: true
+  });
+  var vis_params = ee.Dictionary({
+      'min': [ee.Number(stats.get('value_B8A_lower')),
+              ee.Number(stats.get('value_B11_lower')), 
+              ee.Number(stats.get('value_B4_lower'))],
+      'max': [ee.Number(stats.get('value_B8A_upper')),
+              ee.Number(stats.get('value_B11_upper')),
+              ee.Number(stats.get('value_B4_upper'))]
+    });
+  var percentImage = ui.Map.Layer({
+    eeObject: img,
+    visParams: vis_params.getInfo(),
+    name: 'Imagem ' + '(' + percent + '%)'
+  });
+  //Map.layers().reset([percentImage, operation_all, glebaNow]);
+  return percentImage;
+};
+
+var dot;
+var stretchOption;
+
+var applyStretch = function(img, geometryStretch, checkbox100){
+  var imgLayer;
+  //print(stretchOption);
+  if(stretchOption<5){
+    imgLayer = AddLayerStdDevStretch(ee.Image(img.first()), geometryStretch, stretchOption);}
+  else if (stretchOption<100){
+    imgLayer = AddLayerPercentStretch(ee.Image(img.first()), geometryStretch, stretchOption);}
+  else{
+    //print("entrou");
+    checkbox100.setValue(true, true); // útil para marcar o checkbox caso nenhum esteja marcado
+    imgLayer = ui.Map.Layer(img, visParams, 'Imagem');
+  }
+  return imgLayer;
+};
+
+var symbol = {
+  refresh: '🔄',
+};
+
+var operToOper = function(insertionOperation) {
+    var interestOperation = ee.Algorithms.String(insertionOperation).getInfo();
+    var operationCenterZoom = ee.FeatureCollection(operations
+                          .filter(ee.Filter.eq("proposta", interestOperation)))
+                          .sort('proposta', true);
+                          
+    var numberGlebas = operationCenterZoom.size().getInfo();
+                          
+    var operation = ee.FeatureCollection(operations
+                          .filter(ee.Filter.eq("proposta", interestOperation)))
+                          .style({color: 'black', fillColor: '11ffee00'});
+                          
+    var glebaDict = ee.FeatureCollection(operationCenterZoom).map(function(feature) {
+    var dict = {
+        value: feature.get('id_kml'),
+        label: feature.get('id_kml'), 
+      };
+      return ee.Feature(feature.geometry(), dict);
+    });
+    
+    var features = glebaDict.getInfo().features;
+    
+    var selectItems = [];
+    for (var i = 0; i < features.length; i++) {
+      selectItems.push({
+        label: ee.Algorithms.String(features[i]['properties']['label']).getInfo(),
+        value: ee.Algorithms.String(features[i]['properties']['value']).getInfo()
+    })}
+                          
+    panel.clear();
+    //Map.clear();
+    
+    panel.add(ui.Label('Proposta: ' + interestOperation), {position: 'bottom-left', fontWeight: 'bold'});
+    panel.add(ui.Label('Total de Polígonos: ' + numberGlebas), {position: 'bottom-left', fontWeight: 'bold'});
+    
+    var glebaOperation = function(value){
+      var centerizedGleba = operationCenterZoom.filter(ee.Filter.eq('id_kml', ee.Algorithms.String(value)));
+      var selectedGleba = operationCenterZoom.filter(ee.Filter.eq('id_kml', ee.Algorithms.String(value)))
+                    .style({color: 'blue', fillColor: '11ffee00'});
+      
+      var Imgs_dict = imageCollection.filterBounds(centerizedGleba).map(function(feature) {
+        /*
+        try{
+          try{
+            var satellite = feature.get('SPACECRAFT_NAME');
+            if (satellite == 'Sentinel-2A'){
+              satellite = 'S2A';
+            }
+          }
+          catch(err){
+            var satellite = feature.get('SPACECRAFT_ID');
+            if (satellite == 'LANDSAT_8'){
+              satellite = 'L8';
+            }
+          }
+        }
+        catch(err){
+          var satellite = ee.String("_");
+        }*/
+        var dict = {
+          value: feature.id(),
+          label: feature.date().format('dd/MM/yyyy'),//.format('YYY-MM-dd'),
+          //label: ee.String(satellite).cat(feature.date().format('YYY-MM-dd')),
+        };
+        return ee.Feature(feature.geometry(), dict);
+      });
+      
+      var imgList = Imgs_dict.getInfo().features;
+      //print(imgList);
+      var selected_imgs = [];
+      for (var i = 0; i < imgList.length; i++) {
+        selected_imgs.push({
+          label: imgList[i]['properties']['label'],
+          value: imgList[i]['properties']['value']
+        });
+      }
+      
+      var find_centroid = function(feature){
+        return feature.geometry().centroid();
+      };
+      var centroid = find_centroid(centerizedGleba);
+      
+      var point = ee.Geometry.Point(centroid.coordinates());
+      dot = ui.Map.Layer(point, {color: '#000000'}, "Ponto");
+      
+      var index = ee.Number(2);
+      
+      var map_UL = ui.Map();
+      //map_UL.add(ui.Label('Upper-left'))
+      //map_UL.add(ui.Label('Clique em uma das janelas para plotar o perfil temporal do NDVI'));
+      map_UL.centerObject(centerizedGleba, 14);
+      map_UL.addLayer(operation, null, 'Proposta');
+      map_UL.addLayer(selectedGleba, null, 'Item');
+      map_UL.setControlVisibility(false);
+      map_UL.setControlVisibility({mapTypeControl: true}); // Não permite sobrescrever a imagem já em tela 
+      map_UL.layers().set(index.getInfo(), dot);
+      
+      var map_UR = ui.Map();
+      //map_UR.add(ui.Label('Upper-right'))
+      map_UR.centerObject(centerizedGleba, 14);
+      map_UR.addLayer(operation, null, 'Proposta');
+      map_UR.addLayer(selectedGleba, null, 'Item');
+      map_UR.setControlVisibility(false);
+      
+      var map_LL = ui.Map();
+      //map_LL.add(ui.Label('Lower-left'))
+      map_LL.centerObject(centerizedGleba, 14);
+      map_LL.addLayer(operation, null, 'Proposta');
+      map_LL.addLayer(selectedGleba, null, 'Item');
+      map_LL.setControlVisibility(false);
+      
+      var map_LR = ui.Map();
+      //map_LR.add(ui.Label('Lower_right'))
+      map_LR.centerObject(centerizedGleba, 14);
+      map_LR.addLayer(operation, null, 'Proposta');
+      map_LR.addLayer(selectedGleba, null, 'Item');
+      map_LR.setControlVisibility(false);
+      
+      var linker = ui.Map.Linker([map_UL, map_LL, map_UR, map_LR]);
+
+      // Create panels to hold lon/lat values.
+      var lon = ui.Label();
+      var lat = ui.Label();
+
+      // Create a grid of maps.
+      var mapGrid = ui.Panel(
+        [
+          ui.Panel([map_UL, map_LL], null, {stretch: 'both'}),
+          ui.Panel([map_UR, map_LR], null, {stretch: 'both'})
+        ],
+        ui.Panel.Layout.Flow('horizontal'), {stretch: 'both'}
+      );
+      
+      // Add the maps and title to the ui.root.
+      ui.root.widgets().reset([mapGrid, panel]);
+      ui.root.setLayout(ui.Panel.Layout.Flow('horizontal'));
+      
+      var ndviChart = generate_ndviChart(point);
+      
+      // Register a callback on the default map to be invoked when the map is clicked.
+      var click_ndvi = function(coords){
+        // Update the lon/lat panel with values from the click event.
+        lon.setValue('lon: ' + coords.lon.toFixed(2)),
+        lat.setValue('lat: ' + coords.lat.toFixed(2));
+        
+        // Add a red dot for the point clicked on.
+        var point = ee.Geometry.Point(coords.lon, coords.lat);
+        dot = ui.Map.Layer(point, {color: '#000000'}, "Ponto");
+        
+        //print(map_UL.layers());
+        map_UL.layers().set(index.getInfo(), dot);
+        //print(map_UL.layers());
+        
+        // Create an NDVI chart.
+        var ndviChart = generate_ndviChart(point);
+        
+        //panel.add(ndviChart);
+        panel.widgets().set(8, ndviChart);
+      };
+      
+      map_UL.onClick(click_ndvi);
+      map_UR.onClick(click_ndvi);
+      map_LL.onClick(click_ndvi);
+      map_LR.onClick(click_ndvi);
+      
+      // Campos para selecionar datas das imagens a serem exibidas em cada grid
+      var operation_all = ui.Map.Layer(operation, null, "Proposta");
+      var glebaNow = ui.Map.Layer(selectedGleba, null, "Item");
+      
+      // Definindo as imagens em tela e suas respectivas datas como variávels globais (para aplicar contraste)
+      var image_UL;
+      var date_UL;
+      var image_UR;
+      var date_UR;
+      var image_LL;
+      var date_LL;
+      var image_LR;
+      var date_LR;
+      
+      var showImage = function(map, imgLayer, data){
+        map.clear();
+        map.setControlVisibility(false);
+        map.add(ui.Label(data));
+        map.layers().reset([imgLayer]);
+        map.addLayer(operation, null, 'Proposta');
+        map.addLayer(selectedGleba, null, 'Item');
+        
+        index = ee.Number(3); // To include the point layer as the fourth layer
+        map.onClick(click_ndvi);
+        
+        try{
+          map_UL.layers().set(index.getInfo(), dot);
+        }
+        catch(err){} // Do nothing because map_UL already contains this layer 
+      };
+      
+      var select_img_UL = ui.Select({
+        items: selected_imgs,
+        onChange: function(value){
+          image_UL = imageCollection.filter(ee.Filter.eq('system:index', value));
+          
+          //area para computar o contraste
+          var boundsStretch = ee.List(map_UL.getBounds());//oeste, sul, leste, norte
+          
+          var geometryStretch = ee.Geometry.Polygon([[boundsStretch.get(0), boundsStretch.get(3)],
+                                                     [boundsStretch.get(0), boundsStretch.get(1)],
+                                                     [boundsStretch.get(2), boundsStretch.get(1)],
+                                                     [boundsStretch.get(2), boundsStretch.get(3)]]);
+          
+          var imgLayer = applyStretch(image_UL, geometryStretch, checkbox100);
+          date_UL = ee.Date(image_UL.getInfo().features[0].properties['system:time_start']).format('dd/MM/yyyy').getInfo();
+          showImage(map_UL, imgLayer, date_UL);
+          //map_UL.setControlVisibility({mapTypeControl: true}); // Não permite sobrescrever a imagem já em tela 
+        }
+      });
+      
+      var select_img_UR = ui.Select({
+        items: selected_imgs,
+        onChange:function(value){
+          image_UR = imageCollection.filter(ee.Filter.eq('system:index', value));
+          
+          //area para computar o contraste
+          var boundsStretch = ee.List(map_UR.getBounds());//oeste, sul, leste, norte
+          
+          var geometryStretch = ee.Geometry.Polygon([[boundsStretch.get(0), boundsStretch.get(3)],
+                                                     [boundsStretch.get(0), boundsStretch.get(1)],
+                                                     [boundsStretch.get(2), boundsStretch.get(1)],
+                                                     [boundsStretch.get(2), boundsStretch.get(3)]]);
+          
+          var imgLayer = applyStretch(image_UR, geometryStretch, checkbox100);
+          date_UR = ee.Date(image_UR.getInfo().features[0].properties['system:time_start']).format('dd/MM/yyyy').getInfo();
+          showImage(map_UR, imgLayer, date_UR);
+        }
+      });
+      
+      var select_img_LL = ui.Select({
+        items: selected_imgs,
+        onChange:function(value){
+          image_LL = imageCollection.filter(ee.Filter.eq('system:index', value));
+          
+          //area para computar o contraste
+          var boundsStretch = ee.List(map_LL.getBounds());//oeste, sul, leste, norte
+          
+          var geometryStretch = ee.Geometry.Polygon([[boundsStretch.get(0), boundsStretch.get(3)],
+                                                     [boundsStretch.get(0), boundsStretch.get(1)],
+                                                     [boundsStretch.get(2), boundsStretch.get(1)],
+                                                     [boundsStretch.get(2), boundsStretch.get(3)]]);
+          
+          var imgLayer = applyStretch(image_LL, geometryStretch, checkbox100);
+          date_LL = ee.Date(image_LL.getInfo().features[0].properties['system:time_start']).format('dd/MM/yyyy').getInfo();
+          showImage(map_LL, imgLayer, date_LL);
+        }
+      });
+      
+      var select_img_LR = ui.Select({
+        items: selected_imgs,
+        onChange:function(value){
+          image_LR = imageCollection.filter(ee.Filter.eq('system:index', value));
+          
+          //area para computar o contraste
+          var boundsStretch = ee.List(map_LR.getBounds());//oeste, sul, leste, norte
+          
+          var geometryStretch = ee.Geometry.Polygon([[boundsStretch.get(0), boundsStretch.get(3)],
+                                                     [boundsStretch.get(0), boundsStretch.get(1)],
+                                                     [boundsStretch.get(2), boundsStretch.get(1)],
+                                                     [boundsStretch.get(2), boundsStretch.get(3)]]);
+          
+          var imgLayer = applyStretch(image_LR, geometryStretch, checkbox100);
+          date_LR = ee.Date(image_LR.getInfo().features[0].properties['system:time_start']).format('dd/MM/yyyy').getInfo();
+          showImage(map_LR, imgLayer, date_LR);
+        }
+      });
+      
+      select_img_UL.setPlaceholder('Escolha uma imagem (Upper-left)...');
+      select_img_UR.setPlaceholder('Escolha uma imagem (Upper-right)...');
+      select_img_LL.setPlaceholder('Escolha uma imagem (Lower-left)...');
+      select_img_LR.setPlaceholder('Escolha uma imagem (Lower-right)...');
+      
+      var checkbox100 = ui.Checkbox('100%', false);
+      var checkbox98 = ui.Checkbox('98%', false);
+      var checkbox90 = ui.Checkbox('90%', false);
+      var checkbox1DP = ui.Checkbox('1 DP', false);
+      var checkbox2DP = ui.Checkbox('2 DP', false);
+      var checkbox3DP = ui.Checkbox('3 DP', false);
+      
+      checkbox100.onChange(function(checked){
+        if (checked){
+          stretchOption = 100;
+          checkbox98.setValue(false, false);
+          checkbox90.setValue(false, false);
+          checkbox1DP.setValue(false, false);
+          checkbox2DP.setValue(false, false);
+          checkbox3DP.setValue(false, false);
+        }
+      });
+      
+      checkbox98.onChange(function(checked){
+        if (checked){
+          stretchOption = 98;
+          checkbox100.setValue(false, true);
+          checkbox90.setValue(false, false);
+          checkbox1DP.setValue(false, false);
+          checkbox2DP.setValue(false, false);
+          checkbox3DP.setValue(false, false);
+        }
+        else{
+          checkbox100.setValue(true, true);
+        }
+      });
+      
+      checkbox90.onChange(function(checked){
+        if (checked){
+          stretchOption = 90;
+          checkbox100.setValue(false, true);
+          checkbox98.setValue(false, false);
+          checkbox1DP.setValue(false, false);
+          checkbox2DP.setValue(false, false);
+          checkbox3DP.setValue(false, false);
+        }
+        else{
+          checkbox100.setValue(true, true);
+        }
+      });
+      
+      checkbox1DP.onChange(function(checked){
+        if (checked){
+          stretchOption = 1;
+          checkbox100.setValue(false, true);
+          checkbox98.setValue(false, false);
+          checkbox90.setValue(false, false);
+          checkbox2DP.setValue(false, false);
+          checkbox3DP.setValue(false, false);
+        }
+        else{
+          checkbox100.setValue(true, true);
+        }
+      });
+      
+      checkbox2DP.onChange(function(checked){
+        if (checked){
+          stretchOption = 2;
+          checkbox100.setValue(false, true);
+          checkbox98.setValue(false, false);
+          checkbox90.setValue(false, false);
+          checkbox1DP.setValue(false, false);
+          checkbox3DP.setValue(false, false);
+        }
+        else{
+          checkbox100.setValue(true, true);
+        }
+      });
+      
+      checkbox3DP.onChange(function(checked){
+        if (checked){
+          stretchOption = 3;
+          checkbox100.setValue(false, true);
+          checkbox98.setValue(false, false);
+          checkbox90.setValue(false, false);
+          checkbox1DP.setValue(false, false);
+          checkbox2DP.setValue(false, false);
+        }
+        else{
+          checkbox100.setValue(true, true);
+        }
+      });
+      
+      var contrasteLabel = ui.Label({value:'Contraste', style:{position: 'bottom-left', fontSize: '12px'}});
+      //panel.add(ui.Panel([contrasteLabel, checkbox100, checkbox98, checkbox90, checkbox1DP, checkbox2DP, checkbox3DP], ui.Panel.Layout.flow('horizontal'), {shown: true}), {position: 'bottom-left', fontWeight: 'bold'});
+      panel.widgets().set(3, ui.Panel([contrasteLabel, checkbox100, checkbox98, checkbox90, checkbox1DP, checkbox2DP, checkbox3DP], ui.Panel.Layout.flow('horizontal')), {position: 'bottom-left', fontWeight: 'bold'});
+      
+      var refreshImg = function(map, value){
+        //print(value);
+        if (value){
+          var image = imageCollection.filter(ee.Filter.eq('system:index', value));
+          
+          //area para computar o contraste
+          var boundsStretch = ee.List(map.getBounds());//oeste, sul, leste, norte
+          
+          var geometryStretch = ee.Geometry.Polygon([[boundsStretch.get(0), boundsStretch.get(3)],
+                                                     [boundsStretch.get(0), boundsStretch.get(1)],
+                                                     [boundsStretch.get(2), boundsStretch.get(1)],
+                                                     [boundsStretch.get(2), boundsStretch.get(3)]]);
+          
+          var imgLayer = applyStretch(image, geometryStretch, checkbox100);
+          var date = ee.Date(image.getInfo().features[0].properties['system:time_start']).format('dd/MM/yyyy').getInfo();
+          showImage(map, imgLayer, date);
+        }
+      };
+      var refresh_img_UL = ui.Button({label: symbol.refresh, onClick: function(){refreshImg(map_UL, select_img_UL.getValue())}});
+      var refresh_img_UR = ui.Button({label: symbol.refresh, onClick: function(){refreshImg(map_UR, select_img_UR.getValue())}});
+      var refresh_img_LL = ui.Button({label: symbol.refresh, onClick: function(){refreshImg(map_LL, select_img_LL.getValue())}});
+      var refresh_img_LR = ui.Button({label: symbol.refresh, onClick: function(){refreshImg(map_LR, select_img_LR.getValue())}});
+      
+      //panel.add(ui.Panel([select_img_UL, stretch_UL], ui.Panel.Layout.flow('horizontal')), {position: 'bottom-left', fontWeight: 'bold'});
+      //panel.add(ui.Panel([select_img_UL, refresh_img_UL], ui.Panel.Layout.flow('horizontal'), {shown: true}), {position: 'bottom-left', fontWeight: 'bold'});
+      //panel.add(ui.Panel([select_img_UR, refresh_img_UR], ui.Panel.Layout.flow('horizontal'), {shown: true}), {position: 'bottom-left', fontWeight: 'bold'});
+      //panel.add(ui.Panel([select_img_LL, refresh_img_LL], ui.Panel.Layout.flow('horizontal'), {shown: true}), {position: 'bottom-left', fontWeight: 'bold'});
+      //panel.add(ui.Panel([select_img_LR, refresh_img_LR], ui.Panel.Layout.flow('horizontal'), {shown: true}), {position: 'bottom-left', fontWeight: 'bold'});
+      
+      //panel.add(ndviChart);
+      
+      panel.widgets().set(4, ui.Panel([select_img_UL, refresh_img_UL], ui.Panel.Layout.flow('horizontal')), {position: 'bottom-left', fontWeight: 'bold'});
+      panel.widgets().set(5, ui.Panel([select_img_UR, refresh_img_UR], ui.Panel.Layout.flow('horizontal')), {position: 'bottom-left', fontWeight: 'bold'});
+      panel.widgets().set(6, ui.Panel([select_img_LL, refresh_img_LL], ui.Panel.Layout.flow('horizontal')), {position: 'bottom-left', fontWeight: 'bold'});
+      panel.widgets().set(7, ui.Panel([select_img_LR, refresh_img_LR], ui.Panel.Layout.flow('horizontal')), {position: 'bottom-left', fontWeight: 'bold'});
+      
+      panel.widgets().set(8, ndviChart);
+      
+      map_UL.style().set('cursor', 'crosshair');
+      map_UR.style().set('cursor', 'crosshair');
+      map_LL.style().set('cursor', 'crosshair');
+      map_LR.style().set('cursor', 'crosshair');
+      
+      panel.widgets().set(9, ui.Textbox({
+          placeholder: "Informe o Nº da Proposta de Interesse",
+          onChange: operToOper,
+          style: {width: '250px'}
+        }));
+        
+      checkbox98.setValue(true);
+    };
+    
+    if (numberGlebas == 1){
+      panel.add(ui.Label('Area 1'), {position: 'bottom-left', fontWeight: 'bold'});
+      glebaOperation(ee.Algorithms.String(features[0]['properties']['value']).getInfo());
+    }
+    else if(numberGlebas > 1){
+      var glebaSelection = ui.Select({
+        items: selectItems,
+        onChange: glebaOperation,
+        //value: 'Area 1'
+      }).setPlaceholder('Selecione um Polígono');
+      
+      panel.add(glebaSelection, {position: 'bottom-left', fontWeight: 'bold'});
+      // Alguns data estão sendo duplicadas na lista ao inserir a linha abaixo para já iniciar processando para a Area 1
+      //glebaOperation(ee.Algorithms.String(features[0]['properties']['value']).getInfo());
+    }
+    else{
+      panel.add(ui.Textbox({
+          placeholder: "Informe o Nº da Proposta de Interesse",
+          onChange: operToOper,
+          style: {width: '250px'}
+        }));
+    }
+};
+
+// Painel com opções de manipulação de dados
+var panel = ui.Panel({
+  layout: ui.Panel.Layout.flow('vertical'),
+  style: {width: '400px'}
+});
+
+
+
+var insertOperation = ui.Textbox({
+  placeholder: "Informe o Nº da Proposta de Interesse",
+  onChange: operToOper,
+  style: {width: '250px'}
+});
+
+panel.add(insertOperation);
+
+panel.add(ui.Button({
+  label: 'Confirma Proposta Informada',
+  onClick: insertOperation
+}));
+
+// Adicionando o painel na interface
+ui.root.add(panel);

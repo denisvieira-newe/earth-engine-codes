@@ -1,0 +1,359 @@
+var amostras = ee.FeatureCollection("users/deniscortevieira/estudo_agroscore/amostras_agroscore")
+print(amostras)
+
+var features = ee.List([])
+
+var finishedDraw = false;
+
+var nAmostra = 1;
+
+var amostra = ee.Feature(amostras.filter(ee.Filter.eq("n_amostra", nAmostra)).first());
+
+//print("Amostra", amostra.buffer(100))
+
+
+var drawingTools = Map.drawingTools();
+
+var vegIndices = ee.ImageCollection('MODIS/006/MOD13Q1')
+    .filterDate('2012-07-01', '2022-03-30')
+    .select(['NDVI']);
+
+function drawSample() {
+  
+  panel.clear()
+  leftMap.clear();
+  rightMap.clear();
+  amostra = ee.Feature(amostras.filter(ee.Filter.eq("n_amostra", nAmostra)).first());
+
+  //2021-22
+  var imgCollectionTenLandsat = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) })
+      .merge(ee.ImageCollection("LANDSAT/LC09/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) }))
+      .filterDate('2021-12-01', '2022-02-01')
+      .filterBounds(amostra.geometry())
+      .sort("CLOUD_COVER", true)
+      .first();
+      
+      
+  var imgCollectionNineLandsat = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) })
+      .merge(ee.ImageCollection("LANDSAT/LC09/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) }))
+      .filterDate('2020-12-01', '2021-02-01')
+      .filterBounds(amostra.geometry())
+      .sort("CLOUD_COVER", true)
+      .first();
+      
+      
+  var imgCollectionEightLandsat = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) })
+      .merge(ee.ImageCollection("LANDSAT/LC09/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) }))
+      .filterDate('2019-12-01', '2020-02-01')
+      .filterBounds(amostra.geometry())
+      .sort("CLOUD_COVER", true)
+      .first();
+      
+      
+  var imgCollectionSevenLandsat = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) })
+      .merge(ee.ImageCollection("LANDSAT/LC09/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) }))
+      .filterDate('2018-12-01', '2019-02-01')
+      .filterBounds(amostra.geometry())
+      .sort("CLOUD_COVER", true)
+      .first();
+      
+      
+  var imgCollectionSixLandsat = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) })
+      .merge(ee.ImageCollection("LANDSAT/LC09/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) }))
+      .filterDate('2017-12-01', '2018-02-01')
+      .filterBounds(amostra.geometry())
+      .sort("CLOUD_COVER", true)
+      .first();
+      
+      
+  var imgCollectionFiveLandsat = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) })
+      .merge(ee.ImageCollection("LANDSAT/LC09/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) }))
+      .filterDate('2016-12-01', '2017-02-01')
+      .filterBounds(amostra.geometry())
+      .sort("CLOUD_COVER", true)
+      .first();
+      
+  var imgCollectionFourLandsat = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) })
+      .merge(ee.ImageCollection("LANDSAT/LC09/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) }))
+      .filterDate('2015-12-01', '2016-02-01')
+      .filterBounds(amostra.geometry())
+      .sort("CLOUD_COVER", true)
+      .first();
+      
+  var imgCollectionThreeLandsat = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) })
+      .merge(ee.ImageCollection("LANDSAT/LC09/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) }))
+      .filterDate('2014-12-01', '2015-02-01')
+      .filterBounds(amostra.geometry())
+      .sort("CLOUD_COVER", true)
+      .first();
+      
+  var imgCollectionTwoLandsat = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) })
+      .merge(ee.ImageCollection("LANDSAT/LC09/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) }))
+      .filterDate('2013-12-01', '2014-02-01')
+      .filterBounds(amostra.geometry())
+      .sort("CLOUD_COVER", true)
+      .first();
+      
+  var imgCollectionOneLandsat = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").select(['SR_B6', 'SR_B5', 'SR_B4']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) })
+      .merge(ee.ImageCollection("LANDSAT/LE07/C02/T1_L2").select(['SR_B5', 'SR_B4', 'SR_B3']).map(function (image) { return image.rename(['SWIR', 'NIR', 'RED']) }))
+      .filterDate('2012-12-01', '2013-02-01')
+      .filterBounds(amostra.geometry())
+      .sort("CLOUD_COVER", true)
+      .first();
+      
+  
+  var images = {
+    "2021-22": imgCollectionTenLandsat,
+    "2020-21": imgCollectionNineLandsat,
+    "2019-20": imgCollectionEightLandsat,
+    "2018-19": imgCollectionSevenLandsat,
+    "2017-18": imgCollectionSixLandsat,
+    "2016-17": imgCollectionFiveLandsat,
+    "2015-16": imgCollectionFourLandsat,
+    "2014-15": imgCollectionThreeLandsat,
+    "2013-14": imgCollectionTwoLandsat,
+    "2012-13": imgCollectionOneLandsat,
+  }
+  
+  print(images)
+  
+  
+  /*
+   * Set up the maps and control widgets
+   */
+  
+  // Create the left map, and have it display layer 0.
+  
+  var leftSelector = addLayerSelector(leftMap, 0, 'bottom-left');
+  
+  // Create the right map, and have it display layer 1.
+  
+  var rightSelector = addLayerSelector(rightMap, 1, 'bottom-right');
+  
+  // Adds a layer selection widget to the given map, to allow users to change
+  // which image is displayed in the associated map.
+  function addLayerSelector(mapToChange, defaultValue, position) {
+    var label = ui.Label('Selecione uma imagem');
+    var imgDate;
+    var imgDateLabel = ui.Label();
+  
+    // This function changes the given map to show the selected image.
+    function updateMap(selection) {
+      
+      var minValue = images[selection].reduceRegion({
+          "reducer": ee.Reducer.percentile([2]),
+          "scale": 30,
+          "geometry": amostra.geometry().buffer(10000)
+      }).toArray().reduce(ee.Reducer.min(), ee.List([0])).toList().get(0).getInfo();
+      
+      var maxValue = images[selection].reduceRegion({
+          "reducer": ee.Reducer.percentile([98]),
+          "scale": 30,
+          "geometry": amostra.geometry().buffer(10000)
+      }).toArray().reduce(ee.Reducer.max(), ee.List([0])).toList().get(0).getInfo();
+      
+      imgDate = ee.Date(images[selection].get("system:time_start")).format("dd-MM-yyyy").getInfo();
+      imgDateLabel.setValue(imgDate);
+      
+      mapToChange.layers().set(0, ui.Map.Layer(images[selection], {bands: ["NIR", "SWIR", "RED"], min: minValue, max: maxValue}));
+      mapToChange.addLayer(amostra);
+    }
+  
+    // Configure a selection dropdown to allow the user to choose between images,
+    // and set the map to update when a user makes a selection.
+    var select = ui.Select({items: Object.keys(images), onChange: updateMap});
+    select.setValue(Object.keys(images)[defaultValue], true);
+    
+    
+    
+    var selectedImageDate = ui.Panel(
+      [select, imgDateLabel],
+      ui.Panel.Layout.Flow('horizontal'), { stretch: 'both' }
+  );
+  
+    var controlPanel =
+        ui.Panel({widgets: [label, selectedImageDate], style: {position: position}});
+  
+    mapToChange.add(controlPanel);
+  }
+  
+  
+  /*
+   * Tie everything together
+   */
+   
+  
+  
+  //Chart to visualize NDVI profile
+  var chart = ui.Chart.image
+      .series({
+          imageCollection: vegIndices,
+          region: amostra,
+          reducer: ee.Reducer.mean(),
+          scale: 250,
+          xProperty: 'system:time_start'
+      })
+      .setSeriesNames(['NDVI'])
+      .setOptions({
+          title: 'NDVI',
+          hAxis: { title: 'Date', titleTextStyle: { italic: false, bold: true } },
+          vAxis: {
+              title: 'NDVI (x 10000)',
+              titleTextStyle: { italic: false, bold: true },
+              viewWindow: {
+                  max: 10000,
+                  min: 0
+              }
+          },
+          lineWidth: 2,
+          colors: ['1d6b99'],
+          curveType: 'function'
+      });
+      
+      
+  panel.add(
+      ui.Panel(chart, null, { width: '75%' })
+  );
+  
+  panel.add(sampleInfos);
+  panel.add(findSample);
+  
+  leftMap.centerObject(amostra, 15);
+}
+
+var leftMap = ui.Map();
+  //leftMap.setControlVisibility(false);
+leftMap.drawingTools().setDrawModes(['polygon']).getShown();
+leftMap.drawingTools().setLinked(true);
+
+var rightMap = ui.Map();
+  //rightMap.setControlVisibility(false);
+rightMap.drawingTools().setDrawModes(['polygon']).getShown();
+rightMap.drawingTools().setLinked(true);
+
+// Painel com opções de manipulação de dados
+var panel = ui.Panel({
+    layout: ui.Panel.Layout.flow('horizontal'),
+    style: { height: '220px' }
+});
+
+// Create a SplitPanel to hold the adjacent, linked maps.
+var splitPanel = ui.SplitPanel({
+  firstPanel: leftMap,
+  secondPanel: rightMap,
+  wipe: true,
+  style: {stretch: 'both'}
+});
+
+var classificationPanel = ui.Panel([splitPanel, panel],
+        ui.Panel.Layout.Flow('vertical'), { stretch: 'both' })
+        
+var sampleGroup = ui.Label('Grupo: ' + amostra.get("classe").getInfo());
+var sampleNumber = ui.Label('Amostra: ' + amostra.get("n_amostra").getInfo());
+
+var finishDraw = ui.Button({
+    label: 'Finalizar desenho',
+    onClick: function () {
+        if (drawingTools.layers().length() > 0) {
+            print(drawingTools.layers().get(0).geometries().get(0))
+            print(ee.Feature(drawingTools.layers().get(0).geometries().get(0)).copyProperties(amostra));
+            
+            var drawSample = ee.Feature(drawingTools.layers().get(0).geometries().get(0)).copyProperties(amostra);
+
+            features = features.add(drawSample);
+            print(features)
+            print("primeira", features.get(0))
+            
+            print("ultima", features.get(-1))
+            finishedDraw = true;
+        } else {
+            print("desenhe um poligono")
+        }
+    }
+});
+
+var nextSample = ui.Button({
+    label: 'Proxima amostra',
+    onClick: function () {
+        //print("Proxima amostra")
+
+        if (finishedDraw) {
+            //print(drawingTools.layers().getInfo())
+            //features.add(ee.Feature(drawingTools.layers(), point.copyProperties()))
+            drawingTools.layers().reset();
+            finishedDraw = false;
+            nAmostra = nAmostra+1;
+            drawSample();
+            sampleGroup.setValue('Grupo: ' + amostra.get("classe").getInfo());
+            sampleNumber.setValue('Amostra: ' + amostra.get("n_amostra").getInfo());
+
+        } else {
+            print('desenhe um poligono antes de chamar a proxima amostra')
+        }
+    }
+});
+
+var exportDraw = ui.Button({
+    label: 'Exportar geometrias',
+    onClick: function () {
+        //print("Proxima amostra")
+
+        if (finishedDraw) {
+            //print(drawingTools.layers().getInfo())
+            //features.add(ee.Feature(drawingTools.layers(), point.copyProperties()))
+            drawingTools.layers().reset();
+            finishedDraw = false;
+            print(ee.Feature(features.get(0)).get("n_amostra"))
+            
+            var exportName = "amostras_"+ee.Algorithms.String(ee.Feature(features.get(0)).get("n_amostra")).getInfo()+"_a_"+ee.Algorithms.String(ee.Feature(features.get(-1)).get("n_amostra")).getInfo()
+            
+            Export.table.toDrive({
+              collection: ee.FeatureCollection(features),
+              folder: "agroscore_geometrias_validacao",
+              description: exportName,
+              fileFormat: "CSV"
+            })
+
+        } else {
+            print('desenhe um poligono antes de chamar a proxima amostra')
+        }
+    }
+})
+
+var sampleInfos = ui.Panel([sampleGroup, sampleNumber, finishDraw, nextSample, exportDraw],
+        ui.Panel.Layout.Flow('vertical'), { stretch: 'both' })
+
+
+
+
+
+var textbox = ui.Textbox({
+  placeholder: 'Buscar Amostra',
+  onChange: function(text) {
+    nAmostra = ee.Number.parse(text).toInt().getInfo();
+    drawSample();
+    sampleGroup.setValue('Grupo: ' + amostra.get("classe").getInfo());
+    sampleNumber.setValue('Amostra: ' + amostra.get("n_amostra").getInfo());
+  }
+});
+
+
+var getSample = ui.Button({
+  label: 'Confirma amostra indicada',
+  onClick: textbox
+});
+
+var findSample = ui.Panel([textbox, getSample],
+        ui.Panel.Layout.Flow('vertical'), { stretch: 'both' });
+
+
+
+
+// Set the SplitPanel as the only thing in the UI root.
+ui.root.widgets().reset([classificationPanel]);
+var linker = ui.Map.Linker([leftMap, rightMap]);
+
+
+drawSample();
+    
+    

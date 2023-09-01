@@ -1,0 +1,50 @@
+var t = ee.FeatureCollection(ee.Feature(null, {'Perioso analisado - anos': 30, 'Limite dia seco': 3, 'Numero valores aleatorios': 10000}));
+print(t)
+
+print(t.first().get('Perioso analisado - anos').getInfo())
+
+var tt = ee.FeatureCollection([ee.Feature(ee.Geometry.Point([0,0]), {'Cultura': 'Soja','Maximo periodo seco': 10, 'LMI_ha': 2500}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 11, 'LMI_ha': 2750}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 12, 'LMI_ha': 3000}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 13, 'LMI_ha': 3250}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 14, 'LMI_ha': 3500}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 15, 'LMI_ha': 3750}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 16, 'LMI_ha': 4000}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 17, 'LMI_ha': 4250}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 18, 'LMI_ha': 4500}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 19, 'LMI_ha': 4750}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 20, 'LMI_ha': 5000}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 21, 'LMI_ha': 5250}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 22, 'LMI_ha': 5500}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 23, 'LMI_ha': 5750}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 24, 'LMI_ha': 6000}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 25, 'LMI_ha': 6250}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 26, 'LMI_ha': 6500}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 27, 'LMI_ha': 6750}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 28, 'LMI_ha': 7000}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 29, 'LMI_ha': 7250}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Soja','Maximo periodo seco': 30, 'LMI_ha': 7500}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 10, 'LMI_ha': 4500}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 11, 'LMI_ha': 4750}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 12, 'LMI_ha': 5000}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 13, 'LMI_ha': 5250}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 14, 'LMI_ha': 5500}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 15, 'LMI_ha': 5750}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 16, 'LMI_ha': 6000}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 17, 'LMI_ha': 6250}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 18, 'LMI_ha': 6500}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 19, 'LMI_ha': 6750}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 20, 'LMI_ha': 7000}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 21, 'LMI_ha': 7250}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 22, 'LMI_ha': 7500}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 23, 'LMI_ha': 7750}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 24, 'LMI_ha': 8000}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 25, 'LMI_ha': 8250}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 26, 'LMI_ha': 8500}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 27, 'LMI_ha': 8750}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 28, 'LMI_ha': 9000}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 29, 'LMI_ha': 9250}),
+                              ee.Feature(ee.Geometry.Point([0,0]),  {'Cultura': 'Milho','Maximo periodo seco': 30, 'LMI_ha': 9500})]);
+print(tt)
+
+Export.table.toAsset(tt)

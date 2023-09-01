@@ -1,0 +1,624 @@
+var estado = 'DF';
+
+var muni = table.filter(ee.Filter.eq('SiglaUF', estado));
+print(muni);
+
+//2019
+var crop_mb_2019 = ee.Image("projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2019').eq(39)
+                      .add(ee.Image( "projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2019').eq(41));
+    
+var crop_area_2019 = crop_mb_2019.gt(0);
+print(crop_area_2019);
+
+var ndvi_2019 = ee.Image('users/INPE/ndvi_safra_2010_2020').select('NDVI_2019_20').rename('NDVI').updateMask(crop_area_2019);
+
+//2018
+var crop_mb_2018 = ee.Image("projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2018').eq(39)
+                      .add(ee.Image( "projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2018').eq(41));
+    
+var crop_area_2018 = crop_mb_2018.gt(0);
+
+var ndvi_2018 = ee.Image('users/INPE/ndvi_safra_2010_2020').select('NDVI_2018_19').rename('NDVI').updateMask(crop_area_2018);
+
+//2017
+var crop_mb_2017 = ee.Image("projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2017').eq(39)
+                      .add(ee.Image( "projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2017').eq(41));
+    
+var crop_area_2017 = crop_mb_2017.gt(0);
+
+var ndvi_2017 = ee.Image('users/INPE/ndvi_safra_2010_2020').select('NDVI_2017_18').rename('NDVI').updateMask(crop_area_2017);
+
+//2016
+var crop_mb_2016 = ee.Image("projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2016').eq(39)
+                      .add(ee.Image( "projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2016').eq(41));
+    
+var crop_area_2016 = crop_mb_2016.gt(0);
+
+var ndvi_2016 = ee.Image('users/INPE/ndvi_safra_2010_2020').select('NDVI_2016_17').rename('NDVI').updateMask(crop_area_2016);
+
+//2015
+var crop_mb_2015 = ee.Image("projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2015').eq(39)
+                      .add(ee.Image( "projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2015').eq(41));
+    
+var crop_area_2015 = crop_mb_2015.gt(0);
+
+var ndvi_2015 = ee.Image('users/INPE/ndvi_safra_2010_2020').select('NDVI_2015_16').rename('NDVI').updateMask(crop_area_2015);
+
+//2014
+var crop_mb_2014 = ee.Image("projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2014').eq(39)
+                      .add(ee.Image( "projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2014').eq(41));
+    
+var crop_area_2014 = crop_mb_2014.gt(0);
+
+var ndvi_2014 = ee.Image('users/INPE/ndvi_safra_2010_2020').select('NDVI_2014_15').rename('NDVI').updateMask(crop_area_2014);
+
+//2013
+var crop_mb_2013 = ee.Image("projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2013').eq(39)
+                      .add(ee.Image( "projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2013').eq(41));
+    
+var crop_area_2013 = crop_mb_2013.gt(0);
+print(crop_area_2013);
+
+var ndvi_2013 = ee.Image('users/INPE/ndvi_safra_2010_2020').select('NDVI_2013_14').rename('NDVI').updateMask(crop_area_2013);
+
+//2012
+var crop_mb_2012 = ee.Image("projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2012').eq(39)
+                      .add(ee.Image( "projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2012').eq(41));
+    
+var crop_area_2012 = crop_mb_2012.gt(0);
+print(crop_area_2012);
+
+var ndvi_2012 = ee.Image('users/INPE/ndvi_safra_2010_2020').select('NDVI_2012_13').rename('NDVI').updateMask(crop_area_2012);
+
+//2011
+var crop_mb_2011 = ee.Image("projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2011').eq(39)
+                      .add(ee.Image( "projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2011').eq(41));
+    
+var crop_area_2011 = crop_mb_2011.gt(0);
+
+var ndvi_2011 = ee.Image('users/INPE/ndvi_safra_2010_2020').select('NDVI_2011_12').rename('NDVI').updateMask(crop_area_2011);
+
+//2010
+var crop_mb_2010 = ee.Image("projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2010').eq(39)
+                      .add(ee.Image( "projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1")
+                      .select('classification_2010').eq(41));
+    
+var crop_area_2010 = crop_mb_2010.gt(0);
+
+var ndvi_2010 = ee.Image('users/INPE/ndvi_safra_2010_2020').select('NDVI_2010_11').rename('NDVI').updateMask(crop_area_2010);
+
+
+
+function cropAreaCalc2019(crop){
+  var cropMunicipio = ee.Feature(crop);
+  
+  var sumPixel = ee.Number(ndvi_2019.reduceRegion({
+    reducer: ee.Reducer.count(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var mean = ee.Number(ndvi_2019.reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var thirdQuartile = ee.Number(ndvi_2019.reduceRegion({
+    reducer: ee.Reducer.percentile([75]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var firstQuartile = ee.Number(ndvi_2019.reduceRegion({
+    reducer: ee.Reducer.percentile([25]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var median = ee.Number(ndvi_2019.reduceRegion({
+    reducer: ee.Reducer.median(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var stDev = ee.Number(ndvi_2019.reduceRegion({
+    reducer: ee.Reducer.stdDev(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var crop_area_municipio = (sumPixel.multiply(ee.Number(900))).divide(ee.Number(10000));
+  
+  var keys = ee.List(['crop_area_2019', 'mean_2019', 'firstQuartile_2019', 'thirdQuartile_2019', 'median_2019', 'standard_deviation_2019']);
+  
+  var values = ee.List([crop_area_municipio, mean, firstQuartile, thirdQuartile, median, stDev]);
+                  
+  var dict = ee.Dictionary.fromLists(keys, values);
+  
+  return ee.Feature(cropMunicipio.set(dict));
+}
+
+function cropAreaCalc2018(crop){
+  var cropMunicipio = ee.Feature(crop);
+  
+  var sumPixel = ee.Number(ndvi_2018.reduceRegion({
+    reducer: ee.Reducer.count(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var mean = ee.Number(ndvi_2018.reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var thirdQuartile = ee.Number(ndvi_2018.reduceRegion({
+    reducer: ee.Reducer.percentile([75]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var firstQuartile = ee.Number(ndvi_2018.reduceRegion({
+    reducer: ee.Reducer.percentile([25]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var median = ee.Number(ndvi_2018.reduceRegion({
+    reducer: ee.Reducer.median(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var stDev = ee.Number(ndvi_2018.reduceRegion({
+    reducer: ee.Reducer.stdDev(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var crop_area_municipio = (sumPixel.multiply(ee.Number(900))).divide(ee.Number(10000));
+  
+  var keys = ee.List(['crop_area_2018', 'mean_2018', 'firstQuartile_2018', 'thirdQuartile_2018', 'median_2018', 'standard_deviation_2018']);
+  
+  var values = ee.List([crop_area_municipio, mean, firstQuartile, thirdQuartile, median, stDev]);
+                  
+  var dict = ee.Dictionary.fromLists(keys, values);
+  
+  return ee.Feature(cropMunicipio.set(dict));
+}
+
+function cropAreaCalc2017(crop){
+  var cropMunicipio = ee.Feature(crop);
+  
+  var sumPixel = ee.Number(ndvi_2017.reduceRegion({
+    reducer: ee.Reducer.count(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var mean = ee.Number(ndvi_2017.reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var thirdQuartile = ee.Number(ndvi_2017.reduceRegion({
+    reducer: ee.Reducer.percentile([75]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var firstQuartile = ee.Number(ndvi_2017.reduceRegion({
+    reducer: ee.Reducer.percentile([25]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var median = ee.Number(ndvi_2017.reduceRegion({
+    reducer: ee.Reducer.median(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var stDev = ee.Number(ndvi_2017.reduceRegion({
+    reducer: ee.Reducer.stdDev(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var crop_area_municipio = (sumPixel.multiply(ee.Number(900))).divide(ee.Number(10000));
+  
+  var keys = ee.List(['crop_area_2017', 'mean_2017', 'firstQuartile_2017', 'thirdQuartile_2017', 'median_2017', 'standard_deviation_2017']);
+  
+  var values = ee.List([crop_area_municipio, mean, firstQuartile, thirdQuartile, median, stDev]);
+                  
+  var dict = ee.Dictionary.fromLists(keys, values);
+  
+  return ee.Feature(cropMunicipio.set(dict));
+}
+
+function cropAreaCalc2016(crop){
+  var cropMunicipio = ee.Feature(crop);
+  
+  var sumPixel = ee.Number(ndvi_2016.reduceRegion({
+    reducer: ee.Reducer.count(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var mean = ee.Number(ndvi_2016.reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var thirdQuartile = ee.Number(ndvi_2016.reduceRegion({
+    reducer: ee.Reducer.percentile([75]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var firstQuartile = ee.Number(ndvi_2016.reduceRegion({
+    reducer: ee.Reducer.percentile([25]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var median = ee.Number(ndvi_2016.reduceRegion({
+    reducer: ee.Reducer.median(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var stDev = ee.Number(ndvi_2016.reduceRegion({
+    reducer: ee.Reducer.stdDev(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var crop_area_municipio = (sumPixel.multiply(ee.Number(900))).divide(ee.Number(10000));
+  
+  var keys = ee.List(['crop_area_2016', 'mean_2016', 'firstQuartile_2016', 'thirdQuartile_2016', 'median_2016', 'standard_deviation_2016']);
+  
+  var values = ee.List([crop_area_municipio, mean, firstQuartile, thirdQuartile, median, stDev]);
+                  
+  var dict = ee.Dictionary.fromLists(keys, values);
+  
+  return ee.Feature(cropMunicipio.set(dict));
+}
+
+function cropAreaCalc2015(crop){
+  var cropMunicipio = ee.Feature(crop);
+  
+  var sumPixel = ee.Number(ndvi_2015.reduceRegion({
+    reducer: ee.Reducer.count(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var mean = ee.Number(ndvi_2015.reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var thirdQuartile = ee.Number(ndvi_2015.reduceRegion({
+    reducer: ee.Reducer.percentile([75]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var firstQuartile = ee.Number(ndvi_2015.reduceRegion({
+    reducer: ee.Reducer.percentile([25]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var median = ee.Number(ndvi_2015.reduceRegion({
+    reducer: ee.Reducer.median(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var stDev = ee.Number(ndvi_2015.reduceRegion({
+    reducer: ee.Reducer.stdDev(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var crop_area_municipio = (sumPixel.multiply(ee.Number(900))).divide(ee.Number(10000));
+  
+  var keys = ee.List(['crop_area_2015', 'mean_2015', 'firstQuartile_2015', 'thirdQuartile_2015', 'median_2015', 'standard_deviation_2015']);
+  
+  var values = ee.List([crop_area_municipio, mean, firstQuartile, thirdQuartile, median, stDev]);
+                  
+  var dict = ee.Dictionary.fromLists(keys, values);
+  
+  return ee.Feature(cropMunicipio.set(dict));
+}
+
+function cropAreaCalc2014(crop){
+  var cropMunicipio = ee.Feature(crop);
+  
+  var sumPixel = ee.Number(ndvi_2014.reduceRegion({
+    reducer: ee.Reducer.count(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var mean = ee.Number(ndvi_2014.reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var thirdQuartile = ee.Number(ndvi_2014.reduceRegion({
+    reducer: ee.Reducer.percentile([75]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var firstQuartile = ee.Number(ndvi_2014.reduceRegion({
+    reducer: ee.Reducer.percentile([25]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var median = ee.Number(ndvi_2014.reduceRegion({
+    reducer: ee.Reducer.median(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var stDev = ee.Number(ndvi_2014.reduceRegion({
+    reducer: ee.Reducer.stdDev(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var crop_area_municipio = (sumPixel.multiply(ee.Number(900))).divide(ee.Number(10000));
+  
+  var keys = ee.List(['crop_area_2014', 'mean_2014', 'firstQuartile_2014', 'thirdQuartile_2014', 'median_2014', 'standard_deviation_2014']);
+  
+  var values = ee.List([crop_area_municipio, mean, firstQuartile, thirdQuartile, median, stDev]);
+                  
+  var dict = ee.Dictionary.fromLists(keys, values);
+  
+  return ee.Feature(cropMunicipio.set(dict));
+}
+
+function cropAreaCalc2013(crop){
+  var cropMunicipio = ee.Feature(crop);
+  
+  var sumPixel = ee.Number(ndvi_2013.reduceRegion({
+    reducer: ee.Reducer.count(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var mean = ee.Number(ndvi_2013.reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var thirdQuartile = ee.Number(ndvi_2013.reduceRegion({
+    reducer: ee.Reducer.percentile([75]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var firstQuartile = ee.Number(ndvi_2013.reduceRegion({
+    reducer: ee.Reducer.percentile([25]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var median = ee.Number(ndvi_2013.reduceRegion({
+    reducer: ee.Reducer.median(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var stDev = ee.Number(ndvi_2013.reduceRegion({
+    reducer: ee.Reducer.stdDev(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var crop_area_municipio = (sumPixel.multiply(ee.Number(900))).divide(ee.Number(10000));
+  
+  var keys = ee.List(['crop_area_2013', 'mean_2013', 'firstQuartile_2013', 'thirdQuartile_2013', 'median_2013', 'standard_deviation_2013']);
+  
+  var values = ee.List([crop_area_municipio, mean, firstQuartile, thirdQuartile, median, stDev]);
+                  
+  var dict = ee.Dictionary.fromLists(keys, values);
+  
+  return ee.Feature(cropMunicipio.set(dict));
+}
+
+function cropAreaCalc2012(crop){
+  var cropMunicipio = ee.Feature(crop);
+  
+  var sumPixel = ee.Number(ndvi_2012.reduceRegion({
+    reducer: ee.Reducer.count(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var mean = ee.Number(ndvi_2012.reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var thirdQuartile = ee.Number(ndvi_2012.reduceRegion({
+    reducer: ee.Reducer.percentile([75]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var firstQuartile = ee.Number(ndvi_2012.reduceRegion({
+    reducer: ee.Reducer.percentile([25]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var median = ee.Number(ndvi_2012.reduceRegion({
+    reducer: ee.Reducer.median(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var stDev = ee.Number(ndvi_2012.reduceRegion({
+    reducer: ee.Reducer.stdDev(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var crop_area_municipio = (sumPixel.multiply(ee.Number(900))).divide(ee.Number(10000));
+  
+  var keys = ee.List(['crop_area_2012', 'mean_2012', 'firstQuartile_2012', 'thirdQuartile_2012', 'median_2012', 'standard_deviation_2012']);
+  
+  var values = ee.List([crop_area_municipio, mean, firstQuartile, thirdQuartile, median, stDev]);
+                  
+  var dict = ee.Dictionary.fromLists(keys, values);
+  
+  return ee.Feature(cropMunicipio.set(dict));
+}
+
+function cropAreaCalc2011(crop){
+  var cropMunicipio = ee.Feature(crop);
+  
+  var sumPixel = ee.Number(ndvi_2011.reduceRegion({
+    reducer: ee.Reducer.count(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var mean = ee.Number(ndvi_2011.reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var thirdQuartile = ee.Number(ndvi_2011.reduceRegion({
+    reducer: ee.Reducer.percentile([75]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var firstQuartile = ee.Number(ndvi_2011.reduceRegion({
+    reducer: ee.Reducer.percentile([25]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var median = ee.Number(ndvi_2011.reduceRegion({
+    reducer: ee.Reducer.median(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var stDev = ee.Number(ndvi_2011.reduceRegion({
+    reducer: ee.Reducer.stdDev(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var crop_area_municipio = (sumPixel.multiply(ee.Number(900))).divide(ee.Number(10000));
+  
+  var keys = ee.List(['crop_area_2011', 'mean_2011', 'firstQuartile_2011', 'thirdQuartile_2011', 'median_2011', 'standard_deviation_2011']);
+  
+  var values = ee.List([crop_area_municipio, mean, firstQuartile, thirdQuartile, median, stDev]);
+                  
+  var dict = ee.Dictionary.fromLists(keys, values);
+  
+  return ee.Feature(cropMunicipio.set(dict));
+}
+
+function cropAreaCalc2010(crop){
+  var cropMunicipio = ee.Feature(crop);
+  
+  var sumPixel = ee.Number(ndvi_2010.reduceRegion({
+    reducer: ee.Reducer.count(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var mean = ee.Number(ndvi_2010.reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var thirdQuartile = ee.Number(ndvi_2010.reduceRegion({
+    reducer: ee.Reducer.percentile([75]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var firstQuartile = ee.Number(ndvi_2010.reduceRegion({
+    reducer: ee.Reducer.percentile([25]),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var median = ee.Number(ndvi_2010.reduceRegion({
+    reducer: ee.Reducer.median(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var stDev = ee.Number(ndvi_2010.reduceRegion({
+    reducer: ee.Reducer.stdDev(),
+    geometry: cropMunicipio.geometry(),
+    scale: 30,
+    maxPixels: 1e16}).get('NDVI'));
+    
+  var crop_area_municipio = (sumPixel.multiply(ee.Number(900))).divide(ee.Number(10000));
+  
+  var keys = ee.List(['crop_area_2010', 'mean_2010', 'firstQuartile_2010', 'thirdQuartile_2010', 'median_2010', 'standard_deviation_2010']);
+  
+  var values = ee.List([crop_area_municipio, mean, firstQuartile, thirdQuartile, median, stDev]);
+                  
+  var dict = ee.Dictionary.fromLists(keys, values);
+  
+  return ee.Feature(cropMunicipio.set(dict));
+}
+
+
+var crop_area_municipio = muni.map(cropAreaCalc2019).map(cropAreaCalc2018).map(cropAreaCalc2017).map(cropAreaCalc2016).map(cropAreaCalc2015)
+                              .map(cropAreaCalc2014).map(cropAreaCalc2013).map(cropAreaCalc2012).map(cropAreaCalc2011).map(cropAreaCalc2010);
+
+var cropMunicipies = crop_area_municipio.filter(ee.Filter.neq('crop_ha', 0));
+print(cropMunicipies);
+
+Export.table.toDrive({
+  collection: crop_area_municipio,
+  description: "metricas_ndvi_crop_"+estado, 
+  folder: "metricas_ndvi_crop_", 
+  fileNamePrefix: "metricas_ndvi_crop_"+estado, 
+  fileFormat: 'CSV'
+});

@@ -1,0 +1,50 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = /* color: #d63000 */ee.Geometry.Point([-51.727713028936755, -27.91378027980939]);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+// Funções
+var cloudShadowL8 = function(image) {//conforme USGS_2018_LANDSAT 8 SURFACE REFLECTANCE CODE (LASRC) PRODUCT
+  var bitCloudShadow = ee.Number(2).pow(3).int();
+  
+  var bqa = image.select(['QA_PIXEL']);
+  
+  var maskCloudShadow = bqa.bitwiseAnd(bitCloudShadow).gt(0);
+  
+  return (maskCloudShadow).neq(1);
+};
+
+var cloudsL8 = function(image) {//conforme USGS_2018_LANDSAT 8 SURFACE REFLECTANCE CODE (LASRC) PRODUCT
+  var bitCloud = ee.Number(2).pow(4).int();
+  
+  var bqa = image.select(['QA_PIXEL']);
+  
+  var maskCloud = bqa.bitwiseAnd(bitCloud).gt(0);
+  
+  return (maskCloud).neq(1);
+};
+
+var maskCloudsL8 = function(image) {
+  var c = cloudsL8(image);
+  var cs = cloudShadowL8(image);
+  image = image.updateMask(c);
+  return image.updateMask(cs);
+};
+
+var datasetl8 = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2').filterBounds(geometry)
+print(datasetl8)
+
+var dataset = ee.ImageCollection('LANDSAT/LC09/C02/T1_L2').filterBounds(geometry)
+print(dataset)
+var cloudWithout = dataset.map(maskCloudsL8);
+
+Map.addLayer(dataset.first())
+Map.addLayer(cloudWithout.first())
+
+print(cloudWithout.first().get('SPACECRAFT_ID'))
+
+var s2 = ee.ImageCollection("COPERNICUS/S2_SR").filterBounds(geometry)
+print(s2)
+
+var vis = ee.Algorithms.If(dataset.first().get('SPACECRAFT_ID'),
+                            ee.List([['SR_B5', 'SR_B6', 'SR_B4'], ['SR_B4_p98', 'SR_B5_p98', 'SR_B6_p98'], ['SR_B4_p2', 'SR_B5_p2', 'SR_B6_p2']]),
+                            ee.List([['B8A', 'B11', 'B4'], ['B4_p98', 'B8A_p98', 'B11_p98'], ['B4_p2', 'B8A_p2', 'B11_p2']]))
+print(vis)

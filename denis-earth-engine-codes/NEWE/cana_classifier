@@ -1,0 +1,193 @@
+var roi = ee.FeatureCollection('users/nildsonsilva/CanaNordeste/coruripe')
+Map.addLayer(roi,{},'roi')
+
+// Basic parameters
+var start_date='2018-04-01';
+var end_date='2019-04-01'; 
+//var SCALE= 10;//in meters
+
+/////////////////////////////
+//Sentinel-1/////////////////
+////////////////////////////
+// Load the Sentinel-1 ImageCollection.
+var s1 = ee.ImageCollection('COPERNICUS/S1_GRD')
+      .filterBounds(roi)
+      .filterDate(start_date, end_date)
+      // Filter to get images with VV and VH dual polarization.
+        // Filter to get images collected in interferometric wide swath mode.
+      .filter(ee.Filter.eq('instrumentMode', 'IW'))
+      .select(["VV","VH"])
+      .map(function(img){
+        
+        var data = ee.String(img.get('system:index')).slice(17,25)
+        
+        var ano = data.slice(0,4)
+        var mes = data.slice(4,6)
+        var dia = data.slice(6,9)
+        
+        var dataFinal = ano.cat('-').cat(mes).cat('-').cat(dia)
+        
+        var rvi = ee.Image(0).expression('(4*VH)/(VV+VH)',{
+          'VH':img.select('VH'),
+          'VV':img.select('VV'),
+        }).rename('rvi');
+
+        var dpsvi = ee.Image(0).expression('(VV+VH)/(VV)',{
+          'VH':img.select('VH'),
+          'VV':img.select('VV'),
+        }).rename('dpsvi');
+        
+       var ratio = ee.Image(0).expression('VH/VV',{
+         'VH':img.select('VH'),
+         'VV':img.select('VV'),
+       }).rename('ratio');
+       
+       var mean = ee.Image(0).expression('(VV+VH)/2',{
+         'VH':img.select('VH'),
+         'VV':img.select('VV'),
+       }).rename('meanVVandVH'); 
+       
+       var difference = ee.Image(0).expression('VV - VH',{
+         'VH':img.select('VH'),
+         'VV':img.select('VV'),
+       }).rename('differenceVVandVH'); 
+       
+       var sum = ee.Image(0).expression('VV + VH',{
+         'VH':img.select('VH'),
+         'VV':img.select('VV'),
+       }).rename('sumVVandVH');
+        
+      var final = img.addBands(dpsvi).addBands(rvi).addBands(ratio).addBands(mean).addBands(difference)
+          .addBands(sum).clip(roi)   
+          
+        return final.set('data',dataFinal)
+      });
+
+/////////////////////////////////
+////Métricas////////////////////
+////////////////////////////////
+var percentiles = ee.List([0,25,50,75,100]).sort();
+
+///Anual
+var mediaAnual = s1.reduce(ee.Reducer.mean())
+var acumuladoAnual = s1.reduce(ee.Reducer.sum())
+var stdDevAnual = s1.reduce(ee.Reducer.stdDev())
+var p0Anual = s1.reduce(ee.Reducer.percentile([0]))
+var p25Anual = s1.reduce(ee.Reducer.percentile([25]))
+var p50Anual = s1.reduce(ee.Reducer.percentile([50]))
+var p75Anual = s1.reduce(ee.Reducer.percentile([75]))
+var p100Anual = s1.reduce(ee.Reducer.percentile([100]))
+
+var anualCubo = mediaAnual.addBands(acumuladoAnual).addBands(stdDevAnual).addBands(p0Anual)
+  .addBands(p25Anual).addBands(p50Anual).addBands(p75Anual).addBands(p100Anual);
+
+var anualBandsName = anualCubo.bandNames()
+var anualNewBandsName = anualBandsName.map(function(elem){
+  return ee.String('anual_').cat(ee.String(elem))
+});
+
+var anualCuboOutput = anualCubo.select(anualBandsName,anualNewBandsName)
+
+///Período úmido (Janeiro - Maio)
+var s1Umido = s1.filter(ee.Filter.and(
+  ee.Filter.gte('data','2019-01-01'),ee.Filter.lt('data','2019-06-01')
+  ));
+print(s1Umido,'s1Umido')
+
+var mediaUmido = s1Umido.reduce(ee.Reducer.mean())
+var acumuladoUmido = s1Umido.reduce(ee.Reducer.sum())
+var stdDevUmido = s1Umido.reduce(ee.Reducer.stdDev())
+var p0Umido = s1Umido.reduce(ee.Reducer.percentile([0]))
+var p25Umido = s1Umido.reduce(ee.Reducer.percentile([25]))
+var p50Umido = s1Umido.reduce(ee.Reducer.percentile([50]))
+var p75Umido = s1Umido.reduce(ee.Reducer.percentile([75]))
+var p100Umido = s1Umido.reduce(ee.Reducer.percentile([100]))
+
+var umidoCubo = mediaUmido.addBands(acumuladoUmido).addBands(stdDevUmido).addBands(p0Umido)
+  .addBands(p25Umido).addBands(p50Umido).addBands(p75Umido).addBands(p100Umido);
+
+var umidoBandsName = umidoCubo.bandNames()
+var umidoNewBandsName = umidoBandsName.map(function(elem){
+  return ee.String('umido_').cat(ee.String(elem))
+});
+
+var umidoCuboOutput = umidoCubo.select(umidoBandsName,umidoNewBandsName)
+
+//Período seco (Junho - Dezembro)
+var s1Seco = s1.filter(ee.Filter.and(
+  ee.Filter.gte('data','2018-06-01'),ee.Filter.lt('data','2019-01-01')
+  ));
+print(s1Seco,'s1Seco')
+
+var mediaSeco = s1Umido.reduce(ee.Reducer.mean())
+var acumuladoSeco = s1Umido.reduce(ee.Reducer.sum())
+var stdDevSeco = s1Umido.reduce(ee.Reducer.stdDev())
+var p0Seco = s1Umido.reduce(ee.Reducer.percentile([0]))
+var p25Seco = s1Umido.reduce(ee.Reducer.percentile([25]))
+var p50Seco = s1Umido.reduce(ee.Reducer.percentile([50]))
+var p75Seco = s1Umido.reduce(ee.Reducer.percentile([75]))
+var p100Seco = s1Umido.reduce(ee.Reducer.percentile([100]))
+
+var secoCubo = mediaSeco.addBands(acumuladoSeco).addBands(stdDevSeco).addBands(p0Seco)
+  .addBands(p25Seco).addBands(p50Seco).addBands(p75Seco).addBands(p100Seco);
+
+var secoBandsName = secoCubo.bandNames()
+var secoNewBandsName = secoBandsName.map(function(elem){
+  return ee.String('seco_').cat(ee.String(elem))
+});
+
+var secoCuboOutput = secoCubo.select(secoBandsName,secoNewBandsName)
+
+//imagem final
+var output = anualCuboOutput.addBands(umidoCuboOutput).addBands(secoCuboOutput)
+print(output,'output')
+
+//classificação das áreas de cana
+var amostras = ee.FeatureCollection('users/nildsonsilva/roi_treinoCanaCoruripe1819')
+print(amostras,'amostras')
+Map.addLayer(amostras,{},'amostras')
+
+var amostrasFinal = output.sampleRegions({
+  collection: amostras,
+  properties: ['class'],
+  scale: 10
+})
+
+var classifier = ee.Classifier.smileRandomForest(100).train({
+  features:amostrasFinal,
+  classProperty:'class',
+  inputProperties: output.bandNames()
+})
+
+var explain = classifier.explain()
+print(explain,'explain')
+
+var classification = output.classify(classifier)
+Map.addLayer(classification,{},'Classificação - Cana')
+
+////calcular áreas para determinar o número de amostras
+//var image_area = ee.Image.pixelArea().rename("area")
+//var classArea = image_area.multiply(classification.eq(101))
+//
+//var areaReducer = classArea.reduceRegion({
+//  reducer: ee.Reducer.sum(),
+//  geometry: roi, 
+//  scale: 10,
+//  crs: 'EPSG:4674',
+//  maxPixels: 1e13
+//});
+//print(areaReducer,'areaReducer')
+
+
+//ÁREA PLANTADA DE CANA, CLASSIFICADA PARA 18/19 = 53.741 ha, REFERENCIA = 45.000 ha
+//MAPBIOMAS 19 (58.533 ha) e MAPBIOMAS 18 (57.578 ha) 
+
+//plotar série temporal
+//var chart = ui.Chart.image.series({
+//  imageCollection: collection.select(['ratio']),
+//  region: pointCana,
+//  reducer: ee.Reducer.mean(),
+//  scale: 10,
+//  xProperty: 'segmentStartTime'
+//}).setOptions({title: 'VV over time'});
+//print(chart);

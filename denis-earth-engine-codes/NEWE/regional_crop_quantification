@@ -1,0 +1,59 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = /* color: #d63000 */ee.FeatureCollection(
+        [ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-52.91446656703593, -21.819305027793344],
+                  [-52.92751283168437, -21.832053553177722],
+                  [-52.89798707484843, -21.83779001891554]]]),
+            {
+              "system:index": "0"
+            }),
+        ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-52.87326783656718, -21.812930339155443],
+                  [-52.88082093715312, -21.82759169851984],
+                  [-52.86228150844218, -21.83396573399273]]]),
+            {
+              "system:index": "1"
+            }),
+        ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-52.913093276020305, -21.78742874651224],
+                  [-52.907600111957805, -21.80336777395284],
+                  [-52.89043397426249, -21.796992375750595]]]),
+            {
+              "system:index": "2"
+            })]);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+function crop_regional(features, year){
+  var band = 'classification_'+ee.Algorithms.String(year).getInfo()
+  
+  var region = features.geometry().centroid().buffer(50000)
+    
+  var crop_mask = ee.Image("projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1").select(
+  ee.String(band)).eq(39).add(ee.Image(
+  "projects/mapbiomas-workspace/public/collection5/mapbiomas_collection50_integration_v1").select(
+  ee.String(band)).eq(41))
+  
+  var region_pixels = ee.Number(crop_mask.gt(0).clip(region).reduceRegion({
+    'reducer': ee.Reducer.count(),
+    'geometry': region,
+    'bestEffort': true,
+    'scale': 30,
+    'maxPixels': 1e16 
+  }).get(band));
+  
+  var crop_pixels = ee.Number(crop_mask.gt(0).clip(region).updateMask(crop_mask).reduceRegion({
+    'reducer': ee.Reducer.count(),
+    'geometry': region,
+    'bestEffort': true,
+    'scale': 30,
+    'maxPixels': 1e16 
+  }).get(band))
+  
+  return ee.Number(crop_pixels.divide(region_pixels))
+}
+
+print(crop_regional(geometry, 2015))
+
+

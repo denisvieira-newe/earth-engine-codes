@@ -1,0 +1,84 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var table = ee.FeatureCollection("users/deniscortevieira/NEWE/Crop_01"),
+    geometry = 
+    /* color: #d63000 */
+    /* shown: false */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[-54.36486466091046, -24.778374307523425],
+          [-54.36486466091046, -24.997627253001383],
+          [-54.04900772731671, -24.997627253001383],
+          [-54.04900772731671, -24.778374307523425]]], null, false),
+    imageVisParam = {"opacity":1,"bands":["B8A","B11","B4"],"gamma":1};
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var table1 = table.style({color: 'blue', fillColor: '11ffee00'});
+
+var dateStart = ee.Date('2020-03-20');       
+var currentDate = Date.now();
+var dateFinish = ee.Date(currentDate);
+
+var collection =ee.ImageCollection("COPERNICUS/S2_SR").filterBounds(table)
+                      .filterDate(dateStart, dateFinish);
+                      //.sort()
+print(collection);
+
+var imgPre = ee.Image('COPERNICUS/S2_SR/20200430T134209_20200430T134206_T21JYN')
+                .select(['B4', 'B8A', 'B11']).toInt16();
+
+var imgPos = ee.Image('COPERNICUS/S2_SR/20200510T134209_20200510T134209_T21JYN')
+                .select(['B4', 'B8A', 'B11']).toInt16();
+                
+                
+var imgActual = ee.Image('COPERNICUS/S2_SR/20200614T134221_20200614T134336_T21JYN')
+                .select(['B4', 'B8A', 'B11']).toInt16();              
+              
+var imgPreNdvi = imgPre.normalizedDifference(['B8A', 'B4']).rename('NDVI')
+                        .multiply(ee.Image.constant(10000)).toInt16();
+
+var imgPosNdvi = imgPos.normalizedDifference(['B8A', 'B4']).rename('NDVI')
+                        .multiply(ee.Image.constant(10000)).toInt16();
+                        
+var imgActualNdvi = imgActual.normalizedDifference(['B8A', 'B4']).rename('NDVI')
+                        .multiply(ee.Image.constant(10000)).toInt16();
+
+imgPre = imgPre.addBands(imgPreNdvi).clip(geometry);
+print(imgPre);
+
+imgPos = imgPos.addBands(imgPosNdvi).clip(geometry);
+
+imgActual = imgActual.addBands(imgActualNdvi).clip(geometry);
+
+Export.image.toDrive({
+ image: imgPre,
+ folder: 'Imagens_Boyer', //cria a pasta de saída no drive
+ description: 'Sentinel2_20200430',
+ scale: 20, // define a resolução espacial de saída
+ fileFormat: 'GeoTIFF',
+});
+
+Map.addLayer(imgPre, {}, 'imgPre');
+Map.addLayer(imgPos, {}, 'imgPos');
+Map.addLayer(imgActual, {}, 'imgActual');
+Map.addLayer(table1);
+Map.centerObject(table, 13)
+
+
+//Export.image.toDrive({
+// image: imgPos,
+// folder: 'Imagens_Boyer', //cria a pasta de saída no drive
+// description: 'Sentinel2_20200510',
+// scale: 20, // define a resolução espacial de saída
+// fileFormat: 'GeoTIFF',
+//});
+//
+//Export.image.toDrive({
+// image: imgActual,
+// folder: 'Imagens_Boyer', //cria a pasta de saída no drive
+// description: 'Sentinel2_20200614',
+// scale: 20, // define a resolução espacial de saída
+// fileFormat: 'GeoTIFF',
+//});//

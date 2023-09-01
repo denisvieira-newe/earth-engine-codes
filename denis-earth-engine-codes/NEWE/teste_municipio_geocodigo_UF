@@ -1,0 +1,84 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = 
+    /* color: #98ff00 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.FeatureCollection(
+        [ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-52.66509251088647, -29.455864323450434],
+                  [-52.66509251088647, -29.599255410876317],
+                  [-52.65410618276147, -29.599255410876317],
+                  [-52.65410618276147, -29.455864323450434]]], null, false),
+            {
+              "system:index": "0"
+            }),
+        ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-52.80379490346459, -29.61358333363381],
+                  [-52.80379490346459, -29.632684063042756],
+                  [-52.66509251088647, -29.632684063042756],
+                  [-52.66509251088647, -29.61358333363381]]], null, false),
+            {
+              "system:index": "1"
+            }),
+        ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-52.76946262807397, -29.675647461166484],
+                  [-52.76946262807397, -29.792510364182093],
+                  [-52.74886326283959, -29.792510364182093],
+                  [-52.74886326283959, -29.675647461166484]]], null, false),
+            {
+              "system:index": "2"
+            })]);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var municipies_br = ee.FeatureCollection('users/deniscortevieira/NEWE/BR_Municipios_2019');
+
+var aoi = ee.FeatureCollection(geometry);
+print(aoi)
+
+
+
+
+var local = ee.FeatureCollection(municipies_br).filterBounds(aoi.geometry()).first();
+print(local);
+
+var municipie = ee.String(local.get('NM_MUN'));
+print(municipie);
+
+var geocodigo = ee.String(local.get('CD_MUN'));
+print(geocodigo);
+
+var uf = ee.String(local.get('SIGLA_UF'));
+print(uf);
+
+var keys = ee.List(['UF', 'Geocodigo', 'Municipio']);
+  
+var values = ee.List([uf, geocodigo, municipie]);
+                
+var dict = ee.Dictionary.fromLists(keys, values);
+
+var table = ee.Feature(null).set(dict);
+print(table);
+
+
+function location (features){
+  
+  var local = ee.FeatureCollection('users/deniscortevieira/NEWE/BR_Municipios_2019').filterBounds(features.geometry());
+  
+  return ee.FeatureCollection(local);
+}
+
+var teste = location(aoi);
+print(teste)
+
+

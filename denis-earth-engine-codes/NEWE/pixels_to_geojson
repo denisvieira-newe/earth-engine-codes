@@ -1,0 +1,23 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var area = 
+    /* color: #98ff00 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[-54.37312634340383, -31.26787271368539],
+          [-54.37312634340383, -32.684351407526385],
+          [-52.76912243715383, -32.684351407526385],
+          [-52.76912243715383, -31.26787271368539]]], null, false);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var imageCollection = ee.ImageCollection("LANDSAT/LC08/C01/T1_SR")
+    .filterDate('2019-12-01', '2020-03-31').select(['B4']).max();
+
+var ndviCollection = imageCollection.map(function (img) {
+  var ndImage = img.normalizedDifference(['sur_refl_b02', 'sur_refl_b01']);
+  return ee.Feature(area, ndImage.reduceRegion({'reducer': ee.Reducer.toList(), 'geometry': area, 'maxPixels':1e20}));
+});
+
+print(ndviCollection);

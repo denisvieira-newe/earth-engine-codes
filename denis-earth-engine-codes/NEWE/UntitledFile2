@@ -1,0 +1,110 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = /* color: #d63000 */ee.Geometry.Point([-51.68382040503786, -31.236918509023905]);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var interestCrops = ee.FeatureCollection("users/deniscortevieira/NEWE/analise_Gabriel");
+print(interestCrops);
+
+//-------------Dados MapBiomas Amazonia--------------------------------------
+//Produto MapBiomas Amazonia, consiste em uma imagem com 18 bandas,
+//onde cada banda se refere a classificação de uso e cobertura de um ano
+
+var mapBiomas = ee.Image("projects/mapbiomas-workspace/public/collection4_1/mapbiomas_collection41_integration_v1");
+print(mapBiomas);
+
+//-------------Transformação da imagem 'mapBiomas' em uma coleção de imagens---------
+//Cada banda será convertida em uma unica imagem com 'system:time_start', em
+//seguida as imagens serão agrupadas em uma unica coleção
+
+//Cria uma lista com os nomes das bandas da imagem 'mapBiomas'
+var bandNames = ee.List(mapBiomas.bandNames());
+
+//Função para converter a imagem em uma coleção de imagens
+var bandsToImages = function(band, newList){
+  //Declara as vaiaveis de entrada
+  band = ee.String(band);
+  newList = ee.List(newList);
+  
+  var year = ee.Number.parse(band.slice(15,19));//extrai o ano da classificação
+  var date = ee.Date.fromYMD(year, 01, 01);//cria a data de classificação
+  var image = ee.Image(mapBiomas.select(band))//cria uma imagem a partir de uma banda
+                .rename('mapBiomas')
+                .set('system:time_start', date.millis());//insere a propriedade temporal na imagem
+  
+  return ee.List(newList.add(image));
+};
+
+//Intera a função 'bandToImages' sobre a lista de bandas e imagem, salvando em uma lista que é
+//declarada como uma ImageCollection
+var collectionMapBiomas = ee.ImageCollection(ee.List(bandNames.iterate(bandsToImages, ee.List([]))))
+                              .filterDate('2008-01-01', '2018-01-01');
+
+print('uso da terra', collectionMapBiomas);
+
+var first = collectionMapBiomas.first();
+
+var classMode = first.reduceRegion(ee.Reducer.mode(), geometry, 30).get('mapBiomas');
+print(classMode);
+
+var a = 19;
+print(a);
+
+function classMB(classNumber){
+  classNumber = ee.Algorithms.If(classNumber = 1, 'Floresta');
+  
+  classNumber = ee.Algorithms.If(2, 'Floresta Natural');
+  
+  classNumber = ee.Algorithms.If(3, 'Formação Florestal');
+  
+  classNumber = ee.Algorithms.If(4, 'Formação Savânica');
+  
+  classNumber = ee.Algorithms.If(5, 'Mangue');
+  
+  classNumber = ee.Algorithms.If(9, 'Floresta Plantada');
+  
+  classNumber = ee.Algorithms.If(10, 'Formação Natural não Florestal');
+  
+  classNumber = ee.Algorithms.If(11, 'Área Úmida Natural não Florestal');
+  
+  classNumber = ee.Algorithms.If(12, 'Formação Campestre');
+  
+  classNumber = ee.Algorithms.If(32, 'Apicum');
+  
+  classNumber = ee.Algorithms.If(29, 'Afloramento Rochoso');
+  
+  classNumber = ee.Algorithms.If(13, 'Outra Formação Natural não Florestal');
+  
+  classNumber = ee.Algorithms.If(14, 'Agropecuária');
+  
+  classNumber = ee.Algorithms.If(15, 'Pastagem');
+  
+  classNumber = ee.Algorithms.If(18, 'Agricultura');
+  
+  classNumber = ee.Algorithms.If(19, 'Cultura Anual ou Perene');
+  
+  classNumber = ee.Algorithms.If(20, 'Cultura Semi-Perene');
+  
+  classNumber = ee.Algorithms.If(21, 'Mosaico de Agricultura e Pastagem');
+  
+  classNumber = ee.Algorithms.If(22, 'Área não vegetada');
+  
+  classNumber = ee.Algorithms.If(23, 'Praia e Duna');
+  
+  classNumber = ee.Algorithms.If(24, 'Infraestrutura Urbana');
+  
+  classNumber = ee.Algorithms.If(30, 'Mineração');
+  
+  classNumber = ee.Algorithms.If(25, 'Outra Área não Vegetada');
+  
+  classNumber = ee.Algorithms.If(26, 'Corpos Dágua');
+  
+  classNumber = ee.Algorithms.If(33, 'Rio, Lago e Oceano');
+  
+  classNumber = ee.Algorithms.If(classNumber.eq(31), 'Aquicultura');
+  
+  classNumber = ee.Algorithms.If(classNumber.eq(27), 'Não observado');
+  
+  return classNumber;
+}
+    
+var className = classMB(a);
+print(className);

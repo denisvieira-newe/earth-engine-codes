@@ -1,0 +1,15 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = /* color: #d63000 */ee.Geometry.Point([-51.40095612192839, -27.812398722108277]),
+    imageVisParam = {"opacity":1,"bands":["B5","B6","B4"],"min":292.34000000000003,"max":6068.66,"gamma":1};
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var ic = ee.ImageCollection("LANDSAT/LC08/C01/T1_SR").filterBounds(geometry).filterDate('2020-01-01', '2020-02-01');
+
+print(ic)
+
+print(ee.Image('LANDSAT/LC08/C01/T1_SR/LC08_222079_20200113'))
+
+Map.addLayer(ee.Image('LANDSAT/LC08/C01/T1_SR/LC08_222079_20200113').clip(geometry.buffer(2500).bounds()))
+
+var min = ee.Number(ee.Image('LANDSAT/LC08/C01/T1_SR/LC08_222079_20200113').select(['B3', 'B4', 'B5', 'B6']).clip(geometry.buffer(2500).bounds()).reduceRegion(ee.Reducer.percentile([0,5,10,90,95,100])))
+print(min)
+print()

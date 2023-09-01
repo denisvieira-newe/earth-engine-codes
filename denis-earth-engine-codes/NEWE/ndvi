@@ -1,0 +1,181 @@
+//Função para calculo do Desvio padrão da imagem
+
+function ndvi_extract(feature) {
+  var geom = ee.Geometry(ee.Feature(feature).get('.geo')).coordinates();
+  var region = ee.Geometry.Polygon(geom);
+  var add_prop = function(f) {
+    var new_f = ee.Feature(f);
+    
+    var medianNDVI_nh = ee.Number(cropArea_nh.reduceRegion({
+            reducer: ee.Reducer.median(),
+            geometry: bounds,
+            bestEffort: true,
+            scale: 20,
+            maxPixels: 371185560
+          }).get('NDVI'));
+    
+    var meanNDVI_nh = ee.Number(cropArea_nh.reduceRegion({
+            reducer: ee.Reducer.mean(),
+            geometry: bounds,
+            bestEffort: true,
+            scale: 20,
+            maxPixels: 371185560
+          }).get('NDVI'));
+    
+    var firstQuartileNDVI_nh = ee.Number(cropArea_nh.reduceRegion({
+            reducer: ee.Reducer.percentile([25]),
+            geometry: bounds,
+            bestEffort: true,
+            scale: 20,
+            maxPixels: 371185560
+          }).get('NDVI'));
+    
+    var thirdQuartileNDVI_nh = ee.Number(cropArea_nh.reduceRegion({
+            reducer: ee.Reducer.percentile([75]),
+            geometry: bounds,
+            bestEffort: true,
+            scale: 20,
+            maxPixels: 371185560
+          }).get('NDVI'));
+          
+    var lower_nh = firstQuartileNDVI_nh.subtract(ee.Number(1.5)
+                              .multiply(thirdQuartileNDVI_nh.subtract(firstQuartileNDVI_nh)));
+    
+    var higher_nh = thirdQuartileNDVI_nh.add(ee.Number(1.5)
+                              .multiply(thirdQuartileNDVI_nh.subtract(firstQuartileNDVI_nh)));
+
+    ///////////////////////////////////////
+    
+    var meanNDVI = ee.Number(cropArea.reduceRegion({
+        reducer: ee.Reducer.mean(),
+        geometry: region,
+        bestEffort: true,
+        scale: 20
+      }).get('NDVI'));
+      
+    var medianNDVI = ee.Number(cropArea.reduceRegion({
+        reducer: ee.Reducer.median(),
+        geometry: region,
+        bestEffort: true,
+        scale: 20
+      }).get('NDVI'));
+      
+    var firstQuartileNDVI = ee.Number(cropArea.reduceRegion({
+        reducer: ee.Reducer.percentile([25]),
+        geometry: region,
+        bestEffort: true,
+        scale: 20
+      }).get('NDVI'));
+      
+    var thirdQuartileNDVI = ee.Number(cropArea.reduceRegion({
+        reducer: ee.Reducer.percentile([75]),
+        geometry: region,
+        bestEffort: true,
+        scale: 20
+      }).get('NDVI'));
+      
+    var lower = ee.Algorithms.If(meanNDVI, firstQuartileNDVI.subtract(ee.Number(1.5)
+                              .multiply(thirdQuartileNDVI.subtract(firstQuartileNDVI))), 
+                              ee.String('No data'));
+    
+    var higher = ee.Algorithms.If(meanNDVI, thirdQuartileNDVI.add(ee.Number(1.5)
+                              .multiply(thirdQuartileNDVI.subtract(firstQuartileNDVI))), 
+                              ee.String('No data'));
+    
+    var keys = ee.List(['mean_ndvi_nh', 'median_ndvi_nh', '1_quartil_ndvi_nh', '3_quartil_ndvi_nh', 'lower_nh', 'higher_nh',
+                        'mean_ndvi_aoi', 'median_ndvi_aoi', '1_quartil_ndvi_aoi', '3_quartil_ndvi_aoi', 'lower', 'higher']);
+    //print(keys)
+    var values = ee.List([meanNDVI_nh, medianNDVI_nh, firstQuartileNDVI_nh, thirdQuartileNDVI_nh, lower_nh, higher_nh,
+                          meanNDVI, medianNDVI, firstQuartileNDVI, thirdQuartileNDVI, lower, higher]);
+    //print(values)
+                   
+    var dict = ee.Dictionary.fromLists(keys, values);
+    //print(dict)
+      
+    return ee.Feature(ee.Algorithms.If(dict,
+                                       new_f.set(dict)));
+  };
+  var new_feat = add_prop(feature);
+  return ee.Feature(new_feat);
+}
+
+var mapBiomasCrop = ee.Image('projects/mapbiomas-workspace/public/collection4_1/mapbiomas_collection41_integration_v1')
+                  .select('classification_2018').eq(19).add(ee.Image('projects/mapbiomas-workspace/public/collection4_1/mapbiomas_collection41_integration_v1')
+                  .select('classification_2018').eq(18)).add(ee.Image('projects/mapbiomas-workspace/public/collection4_1/mapbiomas_collection41_integration_v1')
+                  .select('classification_2018').eq(14)).add(ee.Image('projects/mapbiomas-workspace/public/collection4_1/mapbiomas_collection41_integration_v1')
+                  .select('classification_2018').eq(21));
+
+ //Map.addLayer(mapBiomas);
+var crop_features = ee.FeatureCollection("users/deniscortevieira/NEWE/Clientes_Piai");
+
+
+var crop = ee.FeatureCollection("users/deniscortevieira/NEWE/Clientes_Piai").first();
+crop = ee.Geometry(ee.Feature(crop).get('.geo')).coordinates();
+crop = ee.Geometry.Polygon(crop);
+print(crop);
+
+function interestArea (geom){
+  var centroid = geom.centroid();
+  var aoi = centroid.buffer(50000);
+  return mapBiomasCrop.clip(aoi);
+}
+
+var aoi = interestArea(crop);
+print(aoi)
+
+Map.addLayer(aoi);
+
+function determineBounds (geom){
+  var centroid = geom.centroid();
+  return centroid.buffer(50000);
+  
+}
+
+var bounds = determineBounds(crop);
+
+function ndvi (image) {
+  return image.normalizedDifference(['B8A', 'B4']).rename('NDVI');
+}
+
+var dateStart = ee.Date('2019-10-01');       
+//var currentDate = Date.now();
+//var dateFinish = ee.Date(currentDate);
+var dateFinish = ee.Date('2020-03-30');
+
+var imageCollection = ee.ImageCollection("COPERNICUS/S2_SR")
+                        .select(['B4', 'B8A'])
+                        .filterDate(dateStart, dateFinish)
+                        .filterBounds(bounds);
+print(imageCollection)
+                        
+var ndviMax = imageCollection.map(ndvi).max();
+
+function cropNDVI (image) {
+  //seleciona pixels para criar a mascara
+  var cropArea = mapBiomasCrop.gt(0);
+  
+  return image.updateMask(cropArea);
+  //Retorna uma imagem mascara de areas queimadas.
+}
+
+var cropArea = ndviMax.multiply(10000).toInt16();
+var cropArea_nh = cropNDVI(cropArea).clip(bounds);
+print(cropArea)
+
+
+var table = crop_features.map(ndvi_extract);
+print(ee.FeatureCollection(table).getDownloadURL('csv', ['id_kml', 'municipio', 'area_ha', 
+                                'mean_ndvi_nh', 'median_ndvi_nh', '1_quartil_ndvi_nh', '3_quartil_ndvi_nh', 'lower_nh', 'higher_nh',
+                        'mean_ndvi_aoi', 'median_ndvi_aoi', '1_quartil_ndvi_aoi', '3_quartil_ndvi_aoi', 'lower', 'higher']));
+
+Export.table.toDrive({collection: table,
+                      description: 'Crop_01_2018-2019',
+                      folder: 'NDVI_analise_vizinho',
+                      fileNamePrefix: 'Crop_01_2018-2019'
+});
+
+Export.table.toDrive({collection: table,
+                      description: 'Crop_01_2018-2019',
+                      folder: 'NDVI_analise_vizinho',
+                      fileNamePrefix: 'Crop_01_2018-2019'
+});

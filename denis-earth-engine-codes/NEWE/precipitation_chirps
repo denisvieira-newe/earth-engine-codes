@@ -1,0 +1,56 @@
+var chirps = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY");
+var poligono = ee.FeatureCollection(
+        [ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-53.01929604812358, -12.584125769305817],
+                  [-52.51392495437358, -12.154875012903151],
+                  [-53.20636687382557, -12.04874475338516]]]),
+            {
+              "system:index": "0"
+            })]);
+
+
+//Subset CHIRPS
+var startdate=new Date("2015-01-01")
+var enddate=new Date("2020-01-01")
+var selCol=chirps.filterDate(startdate,enddate);
+
+
+//Subset map
+var geoc=2209203;
+// var pol=poligono.filterMetadata("geocodigo","equals",geoc);
+// Map.addLayer(pol, {color: 'FF0000'}, ""+geoc);
+var pol=poligono.first();
+
+var id = pol.get('system:index');
+print(id)
+
+
+//Extract average CHIRPS data for each polygon
+var resVec=selCol.map(function(image){
+  var means=image.reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: pol.geometry(),
+    scale: 30
+  });
+  // var feature = ee.Feature(br1.geometry().centroid(),{
+  //var id = pol.get('system:index');
+  var feature = ee.Feature(null,{
+    'date':ee.Date(image.get('system:time_start')).format("YYYY-MM-dd"),
+    // 'geocodigo':ee.Number(pol.get("geocodigo")).int32(),
+    'precipitation' :means.get('precipitation')
+  });
+  return feature;
+});
+print(resVec);
+
+//Download the results of the extraction
+print(ee.FeatureCollection(resVec).getDownloadURL('csv',['date','precipitation']));
+
+Export.table.toDrive({
+  collection: newft,
+  description: "xingu_precipitation_chirps", 
+  folder: "precipitation_chirps", 
+  fileNamePrefix: "xingu_precipitation_chirps", 
+  fileFormat: 'CSV'
+});

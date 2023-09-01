@@ -1,0 +1,114 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = /* color: #d63000 */ee.Geometry.Point([-54.27808690642055, -12.09333112438666]);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+// Função 1: Utiliza a banda pixel_qa do Landsat 8 para maskarar pixeis de nuvem, sombra de nuvem e água
+function QAMaskCloud (collection) {
+  //Paramêtros:
+  // - collection: ee.ImageCollecition Landsat 8 SR
+  
+  function cloudShadow(image) {//conforme USGS_2018_LANDSAT 8 SURFACE REFLECTANCE CODE (LASRC) PRODUCT
+    var bitCloudShadow = ee.Number(2).pow(3).int();
+    var bqa = image.select(['pixel_qa']);
+    var maskCloudShadow = bqa.bitwiseAnd(bitCloudShadow).gt(0);
+    
+    return (maskCloudShadow).neq(1);
+  }
+  
+  function clouds(image) {//conforme USGS_2018_LANDSAT 8 SURFACE REFLECTANCE CODE (LASRC) PRODUCT
+    var bitCloud = ee.Number(2).pow(5).int();
+    var bqa = image.select(['pixel_qa']);
+    var maskCloud = bqa.bitwiseAnd(bitCloud).gt(0);
+    
+    return (maskCloud).neq(1);
+  }
+  
+  function water(image) {//conforme USGS_2018_LANDSAT 8 SURFACE REFLECTANCE CODE (LASRC) PRODUCT
+    var bitWater = ee.Number(2).pow(2).int();
+    var bqa = image.select(['pixel_qa']);
+    var maskWater2 = bqa.bitwiseAnd(bitWater).gt(0);
+    
+    return (maskWater2).neq(1);
+  }
+    
+  
+  function masked(image) {
+    var w = water(image);
+    var c = clouds(image);
+    var cs = cloudShadow(image);
+    image = image.updateMask(w);
+    image = image.updateMask(c);
+    
+    return image.updateMask(cs);
+  }
+  
+  return collection.map(masked);
+}
+
+// Função 2: Calcula o NDVI para uma imagem Landsat 8. Em caso de rodar o calculo para dados de 
+// outro satélite, atualizar a variável 'interestBands'
+function calcINDEX (image) {
+  var interestBands = ['B5','B4']
+  var NDVI =  image.normalizedDifference(interestBands).rename('NDVI');
+  
+  return image.addBands(NDVI)
+}
+
+//Função 3: 
+function maskCollection(collection, maskBand) {
+  //Paramêtros:
+  // - collection: ee.ImageCollection com imagens que possuem dados a se mascarar;
+  // - maskBand: banda utilizada como referencia para se mascarar os dados da ee.ImageCollection
+  
+  function maskImg(img) {
+    var imgMasked = img.updateMask(img.neq(maskBand));
+    var image = img.addBands(imgMasked.rename('ndvi_masked'));
+    return image.addBands(img.eq(maskBand).rename('mask_bi'))
+  }
+  
+  return collection.map(maskImg)
+}
+
+
+//Define o recorte temporal
+var ini= ee.Date('2021-01-01')
+var fim= ee.Date('2021-11-30')
+
+//Busca a coleção da imagem
+var dataset= ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
+                    .filter(ee.Filter.and(ee.Filter.eq('WRS_PATH', 226),ee.Filter.eq('WRS_ROW', 68)))
+                    .filterDate(ini,fim)
+                    
+print(dataset)  
+
+var collection = QAMaskCloud(dataset);
+print(collection, "coleção");
+var indice = collection.map(calcINDEX).select("NDVI");
+print(indice, "indice ndvi")
+var minNDVI = indice.reduce(ee.Reducer.min());
+
+var maxNDVI = indice.reduce(ee.Reducer.max());
+//print(ndviMin, "indice minimo")
+
+ 
+
+
+var ndviMask = maskCollection(indice, minNDVI)
+print(ndviMask, "NDVI mascaro > mínimo")
+
+var colorizedVis = {
+  min: 0.0,
+  max: 1.0,
+  palette: [
+    'FFFFFF', 'CE7E45', 'DF923D', 'F1B555', 'FCD163', '99B718', '74A901',
+    '66A000', '529400', '3E8601', '207401', '056201', '004C00', '023B01',
+    '012E01', '011D01', '011301'
+  ],
+};
+
+
+Map.addLayer(dataset.first(), {}, "Original");
+Map.addLayer(collection.first(), {}, "collection");
+Map.addLayer(indice.first(), {}, "NDVI");
+Map.addLayer(minNDVI, {}, "Minimo NDVI");
+Map.addLayer(ndviMask, {}, "NDVI > mínimo");
+

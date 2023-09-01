@@ -1,0 +1,172 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = 
+    /* color: #d63000 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.MultiPolygon(
+        [[[[-56.80611226793967, -18.417893558983668],
+           [-56.80611226793967, -18.730315407628172],
+           [-56.63033101793967, -18.730315407628172],
+           [-56.63033101793967, -18.417893558983668]]],
+         [[[-41.27144429918967, -18.70950513123417],
+           [-41.27144429918967, -18.938276831803933],
+           [-41.11763570543967, -18.938276831803933],
+           [-41.11763570543967, -18.70950513123417]]]], null, false);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var cropsInterest = ee.FeatureCollection("users/deniscortevieira/NEWE/Lote_123");
+
+//Determina o periodo de estudo
+var start = ee.Date('2020-07-15');
+
+var currentDate = Date.now();
+var finish = ee.Date(currentDate);
+
+// Funções
+var cloudShadowL8 = function(image) {//conforme USGS_2018_LANDSAT 8 SURFACE REFLECTANCE CODE (LASRC) PRODUCT
+  var bitCloudShadow = ee.Number(2).pow(3).int();
+  
+  var bqa = image.select(['pixel_qa']);
+  
+  var maskCloudShadow = bqa.bitwiseAnd(bitCloudShadow).gt(0);
+  
+  return (maskCloudShadow).neq(1);
+};
+
+var cloudsL8 = function(image) {//conforme USGS_2018_LANDSAT 8 SURFACE REFLECTANCE CODE (LASRC) PRODUCT
+  var bitCloud = ee.Number(2).pow(5).int();
+  
+  var bqa = image.select(['pixel_qa']);
+  
+  var maskCloud = bqa.bitwiseAnd(bitCloud).gt(0);
+  
+  return (maskCloud).neq(1);
+};
+
+var maskCloudsL8 = function(image) {
+  var c = cloudsL8(image);
+  var cs = cloudShadowL8(image);
+  image = image.updateMask(c);
+  return image.updateMask(cs);
+};
+
+var cloudsS2 = function(image) {
+  // Select the QA band.
+  var QA = image.select(['QA60']).toInt().bitCount();
+  var cloudMask = QA.gte(1);
+  
+  return (cloudMask).neq(1);
+  // Return an image masking out cloudy areas.
+};
+
+var maskCloudsS2 = function(image) {
+  var c = cloudsS2(image);
+  return image.updateMask(c);
+};
+
+
+function l8NDVI (image) {
+  return image.normalizedDifference(['B5', 'B4'])
+              .set('system:time_start', image.get('system:time_start'))
+              .set('system:index', image.get('system:index')).rename('NDVI');
+  
+}  
+
+function s2NDVI (image) {
+  return image.normalizedDifference(['B8A', 'B4'])
+              .set('system:time_start', image.get('system:time_start'))
+              .set('system:index', image.get('system:index')).rename('NDVI');
+  
+}
+
+function generateDates (week){
+  
+  return start.advance(week,'week');
+  
+}
+
+//Função para interar sobre a lista de datas
+function weeklyMosaics(date, newlist) {
+  //Cria variaveis que recebem as informações de data e lista de imagens
+  date = ee.Date(date);
+  newlist = ee.List(newlist);
+  
+  //Filtra a coleção de imagens por data, de ano em ano
+  var filtered = ndviCollection.filterDate(date, date.advance(1,'week'));
+  
+  //Faz o mosaico pela soma das imagens para aoi e indica o ano como propriedade da imagem
+  var image = ee.Image(filtered.max()).rename('NDVI')
+                .set('system:time_start', date.advance(1,'week').millis());
+  
+  // Adiciona a imagem para a lista somente se a coleção tem imagem (evita de adicionar variaveis vazias para a coleção de imagens)
+  return ee.List(ee.Algorithms.If(filtered.size(), newlist.add(image), newlist));
+}
+
+
+function mapFunc(feat) {
+  var geom = feat.geometry();
+  
+  var addProp = function(img, f) {
+    var newf = ee.Feature(f);
+    
+    var date = img.date().format('yyyy-MM-dd');
+    
+    var ndvi = img.reduceRegion(ee.Reducer.median(), geom, 20).get('NDVI');
+    
+    return ee.Feature(ee.Algorithms.If(ndvi,
+                                       newf.set(date, ee.Number(ndvi)),
+                                       newf.set(date, ee.Number(-1))));
+  };
+  var newfeat = ee.Feature(weekNdviCollection.iterate(addProp, feat));
+  
+  return newfeat;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+var s2Collection = ee.ImageCollection("COPERNICUS/S2_SR")
+                      .select(['B4', 'B8A', 'QA60'])
+                      .filterDate(start, finish)
+                      .filterBounds(cropsInterest);
+print(s2Collection);
+ 
+
+var l8Collection = ee.ImageCollection("LANDSAT/LC08/C01/T1_SR")
+                      .select(['B4', 'B5', 'pixel_qa'])
+                      .filterDate(start, finish)
+                      .filterBounds(cropsInterest);
+print(l8Collection);                    
+
+var ndviL8Collection = l8Collection.map(maskCloudsL8).map(l8NDVI);
+
+var ndviS2Collection = s2Collection.map(maskCloudsS2).map(s2NDVI);
+
+var ndviCollection = ndviS2Collection.merge(ndviL8Collection).sort('system:time_start', true);
+print(ndviCollection);
+
+//Diferença em anos entre a data inicial (start) e final (finish)
+var diff = ee.Number(finish.difference(start, 'week')).round();
+print(diff);
+
+//Cria uma lista com todas as datas
+var range = ee.List.sequence(0, diff, 1).map(generateDates);
+print(range);
+
+var weekNdviCollection = ee.ImageCollection(ee.List(range.iterate(weeklyMosaics, ee.List([]))));
+print(weekNdviCollection);
+
+var newft = cropsInterest.map(mapFunc);
+//print(newft);
+
+Export.table.toDrive({
+  collection: newft,
+  description: "investigacao_da_lavoura_ndvi_20201028", 
+  folder: "investigacao_da_lavoura_ndvi_s2", 
+  fileNamePrefix: "investigacao_da_lavoura_ndvi_20201028", 
+  fileFormat: 'CSV'
+});
